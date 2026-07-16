@@ -52,24 +52,24 @@ export class UnivolDB extends Dexie {
     super('univol-manager-db')
     this.version(1).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
     })
     this.version(2).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
     })
     this.version(3).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, syncStatus',
     })
     this.version(4).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, syncStatus',
@@ -77,7 +77,7 @@ export class UnivolDB extends Dexie {
     })
     this.version(5).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, syncStatus',
@@ -89,7 +89,7 @@ export class UnivolDB extends Dexie {
     })
     this.version(6).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, syncStatus',
@@ -102,7 +102,7 @@ export class UnivolDB extends Dexie {
     })
     this.version(7).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, syncStatus',
@@ -116,7 +116,7 @@ export class UnivolDB extends Dexie {
     })
     this.version(8).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, lotBetailId, syncStatus',
@@ -133,7 +133,7 @@ export class UnivolDB extends Dexie {
     })
     this.version(9).stores({
       lotsIncubation: 'id, reference, statut, dateMiseEnCouveuse, syncStatus',
-      journal: 'id, horodatage, utilisateurNom',
+      journal: 'id, horodatage, utilisateurNom, syncStatus',
       bandesVolaille: 'id, reference, statut, dateDebut, lotIncubationId, syncStatus',
       mortalites: 'id, bandeId, date, syncStatus',
       ventes: 'id, reference, statutPaiement, dateVente, bandeId, lotBetailId, syncStatus',
@@ -185,6 +185,7 @@ export async function logActivity(utilisateurNom: string, action: string, cible:
     action,
     cible,
     horodatage: new Date().toISOString(),
+    syncStatus: 'en_attente',
   })
 }
 

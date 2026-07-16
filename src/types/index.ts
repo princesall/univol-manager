@@ -263,4 +263,5 @@ export interface JournalEntry {
   action: string
   cible: string
   horodatage: string
+  syncStatus: StatutSync
 }
