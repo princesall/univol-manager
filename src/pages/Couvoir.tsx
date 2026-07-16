@@ -104,8 +104,8 @@ export function Couvoir() {
                     <tr key={lot.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
                       <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{lot.reference}</td>
                       <td className="px-5 py-3.5 text-ink-700">{lot.couveuse}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{lot.quantiteOeufs.toLocaleString('fr-FR')}</td>
-                      <td className="px-5 py-3.5 font-medium text-ink-900">{lot.poussinsEclos?.toLocaleString('fr-FR')}</td>
+                      <td className="px-5 py-3.5 text-ink-700">{(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')}</td>
+                      <td className="px-5 py-3.5 font-medium text-ink-900">{(lot.poussinsEclos ?? 0).toLocaleString('fr-FR')}</td>
                       <td className="px-5 py-3.5">
                         <Badge tone={taux >= 90 ? 'success' : taux >= 80 ? 'warning' : 'danger'}>{taux}%</Badge>
                       </td>
@@ -177,7 +177,7 @@ function LotEnCoursCard({
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700/70">
             <span className="flex items-center gap-1">
-              <Layers size={12} /> {lot.quantiteOeufs.toLocaleString('fr-FR')} œufs
+              <Layers size={12} /> {(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')} œufs
             </span>
             <span className="flex items-center gap-1">
               <Calendar size={12} /> {format(new Date(lot.dateMiseEnCouveuse), 'd MMM', { locale: fr })}
@@ -189,10 +189,10 @@ function LotEnCoursCard({
       {(lot.quantiteApresMirage1 !== undefined || lot.quantiteApresMirage2 !== undefined) && (
         <div className="mt-3 flex gap-3 border-t border-ink-900/6 pt-3 text-xs text-ink-700/70">
           {lot.quantiteApresMirage1 !== undefined && (
-            <span>1er mirage : <span className="font-medium text-ink-900">{lot.quantiteApresMirage1.toLocaleString('fr-FR')}</span></span>
+            <span>1er mirage : <span className="font-medium text-ink-900">{(lot.quantiteApresMirage1 ?? 0).toLocaleString('fr-FR')}</span></span>
           )}
           {lot.quantiteApresMirage2 !== undefined && (
-            <span>2e mirage : <span className="font-medium text-ink-900">{lot.quantiteApresMirage2.toLocaleString('fr-FR')}</span></span>
+            <span>2e mirage : <span className="font-medium text-ink-900">{(lot.quantiteApresMirage2 ?? 0).toLocaleString('fr-FR')}</span></span>
           )}
         </div>
       )}
@@ -376,7 +376,7 @@ function MirageModal({
       return
     }
     if (q > baseComparaison) {
-      setErreur(`Impossible : un mirage ne peut que réduire le nombre d'œufs viables, pas l'augmenter (il y en avait ${baseComparaison.toLocaleString('fr-FR')} avant ce mirage).`)
+      setErreur(`Impossible : un mirage ne peut que réduire le nombre d'œufs viables, pas l'augmenter (il y en avait ${(baseComparaison ?? 0).toLocaleString('fr-FR')} avant ce mirage).`)
       return
     }
     setEnvoi(true)
@@ -408,8 +408,8 @@ function MirageModal({
       <div className="space-y-4">
         <p className="rounded-lg bg-ink-900/[0.03] px-3.5 py-2.5 text-xs text-ink-700">
           {etape === 1
-            ? `Quantité avant ce mirage : ${lot.quantiteOeufs.toLocaleString('fr-FR')} œufs mis en couveuse.`
-            : `Quantité après le 1er mirage : ${(lot.quantiteApresMirage1 ?? lot.quantiteOeufs).toLocaleString('fr-FR')} œufs.`}
+            ? `Quantité avant ce mirage : ${(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')} œufs mis en couveuse.`
+            : `Quantité après le 1er mirage : ${((lot.quantiteApresMirage1 ?? lot.quantiteOeufs) ?? 0).toLocaleString('fr-FR')} œufs.`}
         </p>
         <FormField label="Œufs encore viables après ce mirage">
           <input
@@ -429,7 +429,7 @@ function MirageModal({
         {retires !== null && !erreur && (
           <div className="flex items-center justify-between rounded-lg bg-clay-500/8 px-3.5 py-2.5">
             <span className="text-xs font-medium text-clay-600">Œufs retirés à ce mirage</span>
-            <span className="font-display text-lg font-semibold text-clay-600">{retires.toLocaleString('fr-FR')}</span>
+            <span className="font-display text-lg font-semibold text-clay-600">{(retires ?? 0).toLocaleString('fr-FR')}</span>
           </div>
         )}
         <div className="flex justify-end gap-2 pt-2">
@@ -469,7 +469,7 @@ function EnregistrerEclosionModal({
       return
     }
     if (nbPoussins > oeufsViables) {
-      setErreur(`Impossible : il n'y avait que ${oeufsViables.toLocaleString('fr-FR')} œufs encore viables avant l'éclosion. Vérifiez le chiffre saisi.`)
+      setErreur(`Impossible : il n'y avait que ${(oeufsViables ?? 0).toLocaleString('fr-FR')} œufs encore viables avant l'éclosion. Vérifiez le chiffre saisi.`)
       return
     }
     setEnvoi(true)
@@ -520,7 +520,7 @@ function EnregistrerEclosionModal({
     <Modal open={!!lot} onClose={onClose} title={`Éclosion — ${lot.reference}`}>
       <div className="space-y-4">
         <p className="rounded-lg bg-ink-900/[0.03] px-3.5 py-2.5 text-xs text-ink-700">
-          {oeufsViables.toLocaleString('fr-FR')} œufs encore viables avant éclosion.
+          {(oeufsViables ?? 0).toLocaleString('fr-FR')} œufs encore viables avant éclosion.
         </p>
         <FormField label="Poussins éclos">
           <input
@@ -599,13 +599,13 @@ function LotDetailModal({ lot, onClose }: { lot: LotIncubation | null; onClose: 
   const morts = bande ? Math.max(0, bande.effectifInitial - bande.effectifActuel - vendus) : null
 
   const etapes = [
-    { label: 'Œufs commandés', valeur: lot.quantiteCommandee ?? lot.quantiteOeufs, note: lot.quantiteCommandee ? undefined : '= œufs mis en couveuse (non renseigné séparément)' },
-    { label: 'Œufs mis en couveuse', valeur: lot.quantiteOeufs, note: undefined as string | undefined },
-    { label: 'Après 1er mirage', valeur: lot.quantiteApresMirage1, note: lot.dateMirage1 ? format(new Date(lot.dateMirage1), 'd MMM yyyy', { locale: fr }) : 'Non encore réalisé' },
-    { label: 'Après 2e mirage', valeur: lot.quantiteApresMirage2, note: lot.dateMirage2 ? format(new Date(lot.dateMirage2), 'd MMM yyyy', { locale: fr }) : 'Non encore réalisé' },
-    { label: 'Œufs éclos', valeur: lot.poussinsEclos, note: lot.poussinsEclos ? `Taux : ${Math.round((lot.poussinsEclos / lot.quantiteOeufs) * 100)}%` : 'Pas encore éclos' },
-    { label: 'Poussins morts (Poulailler)', valeur: morts ?? undefined, note: bande ? `Sur la bande ${bande.reference}` : "Pas encore de bande (éclosion non enregistrée)" },
-    { label: 'Poussins vendus', valeur: vendus, note: bande ? `${ventesBande?.length ?? 0} vente(s) liée(s)` : undefined },
+    { label: 'Œufs commandés', valeur: (lot.quantiteCommandee ?? lot.quantiteOeufs) ?? 0, note: lot.quantiteCommandee ? undefined : '= œufs mis en couveuse (non renseigné séparément)' },
+    { label: 'Œufs mis en couveuse', valeur: lot.quantiteOeufs ?? 0, note: undefined as string | undefined },
+    { label: 'Après 1er mirage', valeur: lot.quantiteApresMirage1 ?? 0, note: lot.dateMirage1 ? format(new Date(lot.dateMirage1), 'd MMM yyyy', { locale: fr }) : 'Non encore réalisé' },
+    { label: 'Après 2e mirage', valeur: lot.quantiteApresMirage2 ?? 0, note: lot.dateMirage2 ? format(new Date(lot.dateMirage2), 'd MMM yyyy', { locale: fr }) : 'Non encore réalisé' },
+    { label: 'Œufs éclos', valeur: lot.poussinsEclos ?? 0, note: lot.poussinsEclos ? `Taux : ${Math.round((lot.poussinsEclos / lot.quantiteOeufs) * 100)}%` : 'Pas encore éclos' },
+    { label: 'Poussins morts (Poulailler)', valeur: morts ?? 0, note: bande ? `Sur la bande ${bande.reference}` : "Pas encore de bande (éclosion non enregistrée)" },
+    { label: 'Poussins vendus', valeur: vendus ?? 0, note: bande ? `${ventesBande?.length ?? 0} vente(s) liée(s)` : undefined },
   ]
 
   return (
