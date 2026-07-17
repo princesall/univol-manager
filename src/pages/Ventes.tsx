@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Wallet, Clock3, TrendingUp, FileText, Pencil, Trash2, CircleDollarSign } from 'lucide-react'
-import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande, annulerVenteBande, vendreDepuisLotBetail, annulerVenteLotBetail } from '@/lib/db'
+import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande, annulerVenteBande, vendreDepuisLotBetail, annulerVenteLotBetail, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -36,7 +36,7 @@ const LABEL_TYPE: Record<TypeVente, string> = {
 
 export function Ventes() {
   const { user } = useAuth()
-  const ventes = useLiveQuery(() => db.ventes.orderBy('dateVente').reverse().toArray(), [])
+  const ventes = useLiveQuery(() => db.ventes.orderBy('dateVente').reverse().toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; vente: Vente } | null>(null)
   const [venteJusteCreee, setVenteJusteCreee] = useState<Vente | null>(null)
@@ -238,14 +238,14 @@ function VenteFormModal({
   utilisateurNom: string
   onCreated: (vente: Vente) => void
 }) {
-  const clients = useLiveQuery(() => db.clients.toArray(), [])
+  const clients = useLiveQuery(() => db.clients.toArray().then(filterActive), [])
   const nomsClients = (clients ?? []).map((c) => c.nom)
   const bandesDisponibles = useLiveQuery(
-    () => db.bandesVolaille.where('statut').equals('en_elevage').toArray(),
+    () => db.bandesVolaille.where('statut').equals('en_elevage').toArray().then(filterActive),
     []
   )
   const lotsBetailDisponibles = useLiveQuery(
-    () => db.lotsBetail.where('statut').equals('en_elevage').toArray(),
+    () => db.lotsBetail.where('statut').equals('en_elevage').toArray().then(filterActive),
     []
   )
   const [clientNom, setClientNom] = useState('')

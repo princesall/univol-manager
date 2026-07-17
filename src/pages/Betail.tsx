@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Beef, Calendar, Skull, Syringe, Trash2, PackageCheck } from 'lucide-react'
-import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisLotBetail } from '@/lib/db'
+import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisLotBetail, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import type { CategorieBetail, LotBetail, SourceAcquisitionBetail, TypeSoin, Vente, SoinSanteBetail } from '@/types'
 import { useAuth } from '@/store/auth'
@@ -26,7 +26,7 @@ const LABEL_SOURCE: Record<SourceAcquisitionBetail, string> = { achat: 'Achat', 
 
 export function Betail() {
   const { user } = useAuth()
-  const lots = useLiveQuery(() => db.lotsBetail.orderBy('dateAcquisition').reverse().toArray(), [])
+  const lots = useLiveQuery(() => db.lotsBetail.orderBy('dateAcquisition').reverse().toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [openNouveau, setOpenNouveau] = useState(false)
   const [lotMortalite, setLotMortalite] = useState<LotBetail | null>(null)
@@ -206,7 +206,7 @@ function LotBetailCard({
   onEcouler: () => void
 }) {
   const ageJours = differenceInCalendarDays(new Date(), new Date(lot.dateAcquisition))
-  const mortalitesLot = useLiveQuery(() => db.mortalitesBetail.where('lotBetailId').equals(lot.id).toArray(), [lot.id])
+  const mortalitesLot = useLiveQuery(() => db.mortalitesBetail.where('lotBetailId').equals(lot.id).toArray().then(filterActive), [lot.id])
   const soins = useLiveQuery(() => db.soinsSanteBetail.where('lotBetailId').equals(lot.id).count(), [lot.id])
   const pertes = (mortalitesLot ?? []).reduce((s, m) => s + m.quantite, 0)
   const tauxPerte = Math.round((pertes / lot.effectifInitial) * 100)
@@ -386,6 +386,7 @@ function MortaliteBetailModal({
       quantite: q,
       cause: cause || undefined,
       creePar: utilisateurNom,
+      modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
     await db.lotsBetail.update(lot.id, {
@@ -450,7 +451,10 @@ function SanteBetailModal({
   utilisateurNom: string
 }) {
   const soins = useLiveQuery(
-    () => (lot ? db.soinsSanteBetail.where('lotBetailId').equals(lot.id).reverse().sortBy('date') : Promise.resolve<SoinSanteBetail[]>([])),
+    () =>
+      lot
+        ? db.soinsSanteBetail.where('lotBetailId').equals(lot.id).reverse().sortBy('date').then(filterActive)
+        : Promise.resolve<SoinSanteBetail[]>([]),
     [lot?.id]
   )
   const [type, setType] = useState<TypeSoin>('vaccination')
@@ -474,6 +478,7 @@ function SanteBetailModal({
       rappelPrevu: rappel ? new Date(rappel).toISOString() : undefined,
       notes: notes || undefined,
       creePar: utilisateurNom,
+      modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
     await logActivity(utilisateurNom, `Enregistrement — ${LABEL_TYPE_SOIN[type]} (bétail)`, lot.reference)
@@ -592,7 +597,7 @@ function EcoulerLotBetailModal({
   utilisateurNom: string
   onCreated: (vente: Vente) => void
 }) {
-  const clients = useLiveQuery(() => db.clients.toArray(), [])
+  const clients = useLiveQuery(() => db.clients.toArray().then(filterActive), [])
   const nomsClients = (clients ?? []).map((c) => c.nom)
   const [clientNom, setClientNom] = useState('')
   const [prixUnitaire, setPrixUnitaire] = useState('')

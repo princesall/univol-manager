@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Boxes, PackageCheck, AlertTriangle, Bird, ArrowDownCircle, ArrowUpCircle, Minus, Trash2 } from 'lucide-react'
-import { db, genId, logActivity, enregistrerSortieStock } from '@/lib/db'
+import { db, genId, logActivity, enregistrerSortieStock, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -27,9 +27,9 @@ const LABEL_SOURCE: Record<string, string> = {
 
 export function Stocks() {
   const { user } = useAuth()
-  const items = useLiveQuery(() => db.stockItems.orderBy('nom').toArray(), [])
-  const bandes = useLiveQuery(() => db.bandesVolaille.where('statut').equals('en_elevage').toArray(), [])
-  const mouvements = useLiveQuery(() => db.stockMouvements.orderBy('date').reverse().limit(15).toArray(), [])
+  const items = useLiveQuery(() => db.stockItems.orderBy('nom').toArray().then(filterActive), [])
+  const bandes = useLiveQuery(() => db.bandesVolaille.where('statut').equals('en_elevage').toArray().then(filterActive), [])
+  const mouvements = useLiveQuery(() => db.stockMouvements.orderBy('date').reverse().limit(15).toArray().then(filterActive), [])
   const [openNouveau, setOpenNouveau] = useState(false)
   const [consommer, setConsommer] = useState<{ id: string; nom: string; quantite: number; unite: string } | null>(null)
   const [ajustement, setAjustement] = useState<{ id: string; nom: string; quantite: number } | null>(null)
@@ -390,6 +390,7 @@ function AjusterModal({
       modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
+    const maintenant = new Date().toISOString()
     await db.stockMouvements.add({
       id: genId('mvt'),
       stockItemId: item.id,
@@ -398,8 +399,9 @@ function AjusterModal({
       quantite: Math.abs(Number(quantite) - item.quantite),
       source: 'ajustement',
       motif: 'Correction après comptage physique',
-      date: new Date().toISOString(),
+      date: maintenant,
       creePar: utilisateurNom,
+      modifieLe: maintenant,
       syncStatus: 'en_attente',
     })
     await logActivity(utilisateurNom, "Correction d'inventaire", item.nom)

@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Bird, Skull, Calendar, Link2, PackageCheck, Syringe, Plus, Trash2 } from 'lucide-react'
-import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande } from '@/lib/db'
+import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import type { BandeVolaille, Vente, SoinSante, TypeSoin } from '@/types'
 import { useAuth } from '@/store/auth'
@@ -17,8 +17,8 @@ import { FactureModal, PostVenteModal } from '@/components/invoice/FactureModal'
 
 export function Poulailler() {
   const { user } = useAuth()
-  const bandes = useLiveQuery(() => db.bandesVolaille.orderBy('dateDebut').reverse().toArray(), [])
-  const ventesToutes = useLiveQuery(() => db.ventes.toArray(), [])
+  const bandes = useLiveQuery(() => db.bandesVolaille.orderBy('dateDebut').reverse().toArray().then(filterActive), [])
+  const ventesToutes = useLiveQuery(() => db.ventes.toArray().then(filterActive), [])
   const [bandeMortalite, setBandeMortalite] = useState<BandeVolaille | null>(null)
   const [bandeEcouler, setBandeEcouler] = useState<BandeVolaille | null>(null)
   const [bandeSante, setBandeSante] = useState<BandeVolaille | null>(null)
@@ -193,7 +193,7 @@ function BandeCard({
   onSante: () => void
 }) {
   const ageJours = differenceInCalendarDays(new Date(), new Date(bande.dateDebut))
-  const mortalitesBande = useLiveQuery(() => db.mortalites.where('bandeId').equals(bande.id).toArray(), [bande.id])
+  const mortalitesBande = useLiveQuery(() => db.mortalites.where('bandeId').equals(bande.id).toArray().then(filterActive), [bande.id])
   const perte = (mortalitesBande ?? []).reduce((s, m) => s + m.quantite, 0)
   const tauxPerte = Math.round((perte / bande.effectifInitial) * 100)
   const soins = useLiveQuery(() => db.soinsSante.where('bandeId').equals(bande.id).count(), [bande.id])
@@ -280,6 +280,7 @@ function MortaliteModal({
       quantite: q,
       cause: cause || undefined,
       creePar: utilisateurNom,
+      modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
     await db.bandesVolaille.update(bande.id, {
@@ -344,7 +345,7 @@ function EcoulerModal({
   utilisateurNom: string
   onCreated: (vente: Vente) => void
 }) {
-  const clients = useLiveQuery(() => db.clients.toArray(), [])
+  const clients = useLiveQuery(() => db.clients.toArray().then(filterActive), [])
   const nomsClients = (clients ?? []).map((c) => c.nom)
   const [clientNom, setClientNom] = useState('')
   const [prixUnitaire, setPrixUnitaire] = useState('')
@@ -513,7 +514,10 @@ function SanteModal({
   utilisateurNom: string
 }) {
   const soins = useLiveQuery(
-    () => (bande ? db.soinsSante.where('bandeId').equals(bande.id).reverse().sortBy('date') : Promise.resolve<SoinSante[]>([])),
+    () =>
+      bande
+        ? db.soinsSante.where('bandeId').equals(bande.id).reverse().sortBy('date').then(filterActive)
+        : Promise.resolve<SoinSante[]>([]),
     [bande?.id]
   )
   const [type, setType] = useState<TypeSoin>('vaccination')
@@ -537,6 +541,7 @@ function SanteModal({
       rappelPrevu: rappel ? new Date(rappel).toISOString() : undefined,
       notes: notes || undefined,
       creePar: utilisateurNom,
+      modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
     await logActivity(utilisateurNom, `Enregistrement — ${LABEL_TYPE_SOIN[type]}`, bande.reference)

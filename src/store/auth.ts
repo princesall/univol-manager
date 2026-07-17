@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { AppUser, Role } from '@/types'
 import { getSupabaseClient } from '@/lib/supabase'
-import { startAutoSync } from '@/lib/sync'
+import { startAutoSync, stopAutoSync } from '@/lib/sync'
 
 // Mots de passe prédéfinis par rôle (chargeables depuis les variables d'environnement)
 const MOTS_DE_PASSE: Record<Role, string> = {
@@ -52,10 +52,14 @@ interface AuthState {
   toggleSync: () => void
 }
 
+const userInitial: AppUser | null = JSON.parse(sessionStorage.getItem('univol_user') || 'null')
+const supabaseDispo = () => getSupabaseClient() !== null
+
 export const useAuth = create<AuthState>((set) => ({
-  user: JSON.parse(sessionStorage.getItem('univol_user') || 'null'),
+  user: userInitial,
   erreur: null,
-  syncEnabled: false,
+  // Restaurer la sync si l'utilisateur est déjà connecté et Supabase configuré
+  syncEnabled: Boolean(userInitial) && supabaseDispo(),
   connecter: (motDePasse) => {
     const role = Object.entries(MOTS_DE_PASSE).find(([_, mdp]) => mdp === motDePasse)?.[0] as Role
     if (!role) {
@@ -76,6 +80,7 @@ export const useAuth = create<AuthState>((set) => ({
     return true
   },
   deconnecter: () => {
+    stopAutoSync()
     sessionStorage.removeItem('univol_user')
     set({ user: null, syncEnabled: false })
   },
@@ -89,6 +94,8 @@ export const useAuth = create<AuthState>((set) => ({
       const newState = !state.syncEnabled
       if (newState) {
         startAutoSync(60000)
+      } else {
+        stopAutoSync()
       }
       return { syncEnabled: newState }
     })

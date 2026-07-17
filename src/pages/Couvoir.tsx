@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Egg, Calendar, Layers, CheckCircle2, Search, Eye, Trash2, Pencil } from 'lucide-react'
-import { db, genId, logActivity } from '@/lib/db'
+import { db, genId, logActivity, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import type { LotIncubation, Vente } from '@/types'
 import { useAuth } from '@/store/auth'
@@ -86,7 +86,7 @@ function ConfirmationSuppressionModal({
 
 export function Couvoir() {
   const { user } = useAuth()
-  const lots = useLiveQuery(() => db.lotsIncubation.orderBy('dateMiseEnCouveuse').reverse().toArray(), [])
+  const lots = useLiveQuery(() => db.lotsIncubation.orderBy('dateMiseEnCouveuse').reverse().toArray().then(filterActive), [])
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; lot: LotIncubation } | null>(null)
   const [lotEclosion, setLotEclosion] = useState<LotIncubation | null>(null)
   const [lotMirage, setLotMirage] = useState<{ lot: LotIncubation; etape: 1 | 2 } | null>(null)
@@ -744,7 +744,10 @@ function LotDetailModal({ lot, onClose }: { lot: LotIncubation | null; onClose: 
     [lot?.id]
   )
   const ventesBande = useLiveQuery(
-    () => (bande ? db.ventes.where('bandeId').equals(bande.id).toArray() : Promise.resolve<Vente[]>([])),
+    () =>
+      bande
+        ? db.ventes.where('bandeId').equals(bande.id).toArray().then(filterActive)
+        : Promise.resolve<Vente[]>([]),
     [bande?.id]
   )
 

@@ -21,6 +21,7 @@ import clsx from 'clsx'
 import { useAuth, ROLE_LABELS, ROLE_MODULE_ACCESS } from '@/store/auth'
 import { SyncIndicator } from '@/components/layout/SyncIndicator'
 import { startAutoSync, stopAutoSync } from '@/lib/sync'
+import { getSupabaseClient } from '@/lib/supabase'
 
 const NAV_ITEMS = [
   { key: 'dashboard', to: '/', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -38,21 +39,20 @@ const NAV_ITEMS = [
 ] as const
 
 export function AppShell() {
-  const { user, deconnecter } = useAuth()
+  const { user, deconnecter, syncEnabled } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOuvert, setMenuOuvert] = useState(false)
 
-  // ✅ Lancer la synchronisation automatique au montage du composant
+  // Synchronisation automatique uniquement si Supabase est configuré et sync activée
   useEffect(() => {
-    console.log('🔄 Démarrage de la synchronisation automatique...')
-    startAutoSync(60000) // Sync toutes les 60 secondes
-
-    return () => {
-      console.log('🛑 Arrêt de la synchronisation automatique')
+    if (!syncEnabled || !getSupabaseClient()) {
       stopAutoSync()
+      return
     }
-  }, [])
+    startAutoSync(60000)
+    return () => stopAutoSync()
+  }, [syncEnabled])
 
   if (!user) return null
 

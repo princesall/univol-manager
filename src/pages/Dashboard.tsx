@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { Egg, TrendingDown, Wallet, PackageCheck, AlertTriangle, Clock } from 'lucide-react'
-import { db } from '@/lib/db'
+import { db, filterActive } from '@/lib/db'
 import { StatCard, Card, Badge } from '@/components/ui/Primitives'
 import { useAuth, ROLE_LABELS } from '@/store/auth'
 import { differenceInCalendarDays, format, isSameMonth, subMonths, startOfMonth } from 'date-fns'
@@ -11,12 +11,12 @@ const MOIS_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'
 
 export function Dashboard() {
   const { user } = useAuth()
-  const lots = useLiveQuery(() => db.lotsIncubation.toArray(), [])
-  const bandes = useLiveQuery(() => db.bandesVolaille.where('statut').equals('en_elevage').toArray(), [])
-  const ventes = useLiveQuery(() => db.ventes.toArray(), [])
-  const depenses = useLiveQuery(() => db.depenses.toArray(), [])
-  const achats = useLiveQuery(() => db.achats.toArray(), [])
-  const stockItems = useLiveQuery(() => db.stockItems.toArray(), [])
+  const lots = useLiveQuery(() => db.lotsIncubation.toArray().then(filterActive), [])
+  const bandes = useLiveQuery(() => db.bandesVolaille.where('statut').equals('en_elevage').toArray().then(filterActive), [])
+  const ventes = useLiveQuery(() => db.ventes.toArray().then(filterActive), [])
+  const depenses = useLiveQuery(() => db.depenses.toArray().then(filterActive), [])
+  const achats = useLiveQuery(() => db.achats.toArray().then(filterActive), [])
+  const stockItems = useLiveQuery(() => db.stockItems.toArray().then(filterActive), [])
 
   const enCours = lots?.filter((l) => l.statut === 'en_cours') ?? []
   const eclos = lots?.filter((l) => l.statut === 'eclos') ?? []

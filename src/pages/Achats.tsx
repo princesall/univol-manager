@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, ShoppingCart, Clock3, TrendingUp, Pencil, Trash2, CircleDollarSign } from 'lucide-react'
-import { db, genId, genReference, logActivity, ensureFournisseurExists, enregistrerEntreeStock } from '@/lib/db'
+import { db, genId, genReference, logActivity, ensureFournisseurExists, enregistrerEntreeStock, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -33,7 +33,7 @@ const TONE_STATUT: Record<StatutPaiement, 'success' | 'warning' | 'danger'> = {
 
 export function Achats() {
   const { user } = useAuth()
-  const achats = useLiveQuery(() => db.achats.orderBy('date').reverse().toArray(), [])
+  const achats = useLiveQuery(() => db.achats.orderBy('date').reverse().toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; achat: Achat } | null>(null)
   const [achatASupprimer, setAchatASupprimer] = useState<Achat | null>(null)
@@ -193,9 +193,9 @@ function AchatFormModal({
   onClose: () => void
   utilisateurNom: string
 }) {
-  const fournisseurs = useLiveQuery(() => db.fournisseurs.toArray(), [])
+  const fournisseurs = useLiveQuery(() => db.fournisseurs.toArray().then(filterActive), [])
   const nomsFournisseurs = (fournisseurs ?? []).map((f) => f.nom)
-  const stockItems = useLiveQuery(() => db.stockItems.toArray(), [])
+  const stockItems = useLiveQuery(() => db.stockItems.toArray().then(filterActive), [])
   const nomsArticles = (stockItems ?? []).map((s) => s.nom)
   const [fournisseurNom, setFournisseurNom] = useState('')
   const [categorie, setCategorie] = useState<CategorieAchat>('oeufs')

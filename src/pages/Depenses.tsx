@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Receipt, PieChart, TrendingDown, Pencil, Trash2 } from 'lucide-react'
-import { db, genId, genReference, logActivity } from '@/lib/db'
+import { db, genId, genReference, logActivity, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -34,7 +34,7 @@ const COULEUR_CATEGORIE: Record<CategorieDepense, string> = {
 
 export function Depenses() {
   const { user } = useAuth()
-  const depenses = useLiveQuery(() => db.depenses.orderBy('date').reverse().toArray(), [])
+  const depenses = useLiveQuery(() => db.depenses.orderBy('date').reverse().toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; depense: Depense } | null>(null)
   const [depenseASupprimer, setDepenseASupprimer] = useState<Depense | null>(null)

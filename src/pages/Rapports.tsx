@@ -4,16 +4,16 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { format, subMonths, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { FileText, TrendingUp, Egg, Boxes } from 'lucide-react'
-import { db } from '@/lib/db'
+import { db, filterActive } from '@/lib/db'
 import { Card, Badge, StatCard } from '@/components/ui/Primitives'
 import { Button } from '@/components/ui/Button'
 
 export function Rapports() {
-  const lots = useLiveQuery(() => db.lotsIncubation.toArray(), [])
-  const ventes = useLiveQuery(() => db.ventes.toArray(), [])
-  const depenses = useLiveQuery(() => db.depenses.toArray(), [])
-  const achats = useLiveQuery(() => db.achats.toArray(), [])
-  const stockItems = useLiveQuery(() => db.stockItems.toArray(), [])
+  const lots = useLiveQuery(() => db.lotsIncubation.toArray().then(filterActive), [])
+  const ventes = useLiveQuery(() => db.ventes.toArray().then(filterActive), [])
+  const depenses = useLiveQuery(() => db.depenses.toArray().then(filterActive), [])
+  const achats = useLiveQuery(() => db.achats.toArray().then(filterActive), [])
+  const stockItems = useLiveQuery(() => db.stockItems.toArray().then(filterActive), [])
   const [exportEnCours, setExportEnCours] = useState<'production' | 'financier' | null>(null)
 
   const clos = (lots ?? []).filter((l) => l.statut === 'eclos')

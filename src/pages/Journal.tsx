@@ -2,11 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ScrollText } from 'lucide-react'
-import { db } from '@/lib/db'
+import { db, filterActive } from '@/lib/db'
 import { Card, EmptyState } from '@/components/ui/Primitives'
 
 export function Journal() {
-  const entries = useLiveQuery(() => db.journal.orderBy('horodatage').reverse().toArray(), [])
+  const entries = useLiveQuery(() => db.journal.orderBy('horodatage').reverse().toArray().then(filterActive), [])
 
   return (
     <div className="space-y-7">

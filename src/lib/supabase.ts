@@ -1,9 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { supabaseConfig, checkSupabaseConfig } from '@/config/supabase'
 
-let supabaseClient: ReturnType<typeof createClient> | null = null
+// Client non générique (schéma dynamique multi-tables) — évite le type `never` de PostgREST
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AppSupabase = SupabaseClient<any, 'public', any>
 
-export function getSupabaseClient() {
+let supabaseClient: AppSupabase | null = null
+
+export function getSupabaseClient(): AppSupabase | null {
   if (!checkSupabaseConfig()) {
     return null
   }

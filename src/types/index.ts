@@ -37,6 +37,7 @@ export interface LotIncubation {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -55,6 +56,7 @@ export interface BandeVolaille {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -65,6 +67,8 @@ export interface EnregistrementMortalite {
   quantite: number
   cause?: string
   creePar: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -91,6 +95,7 @@ export interface Vente {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -112,6 +117,7 @@ export interface Depense {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -131,6 +137,7 @@ export interface Achat {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -138,9 +145,12 @@ export interface Fournisseur {
   id: string
   nom: string
   telephone?: string
+  email?: string
   adresse?: string
   notes?: string
   creeLe: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -148,9 +158,12 @@ export interface Client {
   id: string
   nom: string
   telephone?: string
+  email?: string
   adresse?: string
   notes?: string
   creeLe: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -163,7 +176,9 @@ export interface StockItem {
   quantite: number
   unite: string // ex: "sacs", "kg", "unités"
   seuilAlerte: number
+  creeLe?: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -180,6 +195,8 @@ export interface StockMouvement {
   motif?: string
   date: string
   creePar: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -195,6 +212,8 @@ export interface SoinSante {
   rappelPrevu?: string // date du prochain rappel si applicable
   notes?: string
   creePar: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -214,6 +233,7 @@ export interface LotBetail {
   creePar: string
   creeLe: string
   modifieLe: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -224,6 +244,8 @@ export interface MortaliteBetail {
   quantite: number
   cause?: string
   creePar: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -237,6 +259,8 @@ export interface SoinSanteBetail {
   rappelPrevu?: string
   notes?: string
   creePar: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }
 
@@ -263,5 +287,7 @@ export interface JournalEntry {
   action: string
   cible: string
   horodatage: string
+  modifieLe?: string
+  supprimeLe?: string
   syncStatus: StatutSync
 }

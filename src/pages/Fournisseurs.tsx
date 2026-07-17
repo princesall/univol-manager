@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Truck, Phone, MapPin, Pencil, Trash2, ChevronRight } from 'lucide-react'
-import { db, genId, logActivity } from '@/lib/db'
+import { db, genId, logActivity, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -15,8 +15,8 @@ import type { Achat, Fournisseur } from '@/types'
 
 export function Fournisseurs() {
   const { user } = useAuth()
-  const fournisseurs = useLiveQuery(() => db.fournisseurs.orderBy('nom').toArray(), [])
-  const achats = useLiveQuery(() => db.achats.toArray(), [])
+  const fournisseurs = useLiveQuery(() => db.fournisseurs.orderBy('nom').toArray().then(filterActive), [])
+  const achats = useLiveQuery(() => db.achats.toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; fournisseur: Fournisseur } | null>(null)
   const [fournisseurASupprimer, setFournisseurASupprimer] = useState<Fournisseur | null>(null)

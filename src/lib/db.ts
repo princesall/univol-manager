@@ -157,6 +157,15 @@ export class UnivolDB extends Dexie {
 
 export const db = new UnivolDB()
 
+/** Filtre les enregistrements soft-supprimés (en attente de sync). */
+export function isNotDeleted<T extends { supprimeLe?: string | null }>(record: T): boolean {
+  return !record.supprimeLe
+}
+
+export function filterActive<T extends { supprimeLe?: string | null }>(records: T[] | undefined): T[] {
+  return (records ?? []).filter(isNotDeleted)
+}
+
 export function genId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
@@ -179,12 +188,14 @@ export function genReference(prefix: string): string {
 }
 
 export async function logActivity(utilisateurNom: string, action: string, cible: string) {
+  const maintenant = new Date().toISOString()
   await db.journal.add({
     id: genId('log'),
     utilisateurNom,
     action,
     cible,
-    horodatage: new Date().toISOString(),
+    horodatage: maintenant,
+    modifieLe: maintenant,
     syncStatus: 'en_attente',
   })
 }
@@ -240,6 +251,7 @@ export async function enregistrerEntreeStock(params: {
     motif: params.motif,
     date: maintenant,
     creePar: params.utilisateurNom,
+    modifieLe: maintenant,
     syncStatus: 'en_attente',
   })
 }
@@ -275,6 +287,7 @@ export async function enregistrerSortieStock(params: {
     motif: params.motif,
     date: maintenant,
     creePar: params.utilisateurNom,
+    modifieLe: maintenant,
     syncStatus: 'en_attente',
   })
 }
@@ -355,12 +368,16 @@ export async function annulerVenteLotBetail(lotId: string, quantite: number) {
 export async function ensureClientExists(nomSaisi: string): Promise<string> {
   const nom = nomSaisi.trim()
   if (!nom) return nom
-  const existant = await db.clients.filter((c) => c.nom.trim().toLowerCase() === nom.toLowerCase()).first()
+  const existant = await db.clients
+    .filter((c) => !c.supprimeLe && c.nom.trim().toLowerCase() === nom.toLowerCase())
+    .first()
   if (existant) return existant.nom
+  const maintenant = new Date().toISOString()
   await db.clients.add({
     id: genId('cli'),
     nom,
-    creeLe: new Date().toISOString(),
+    creeLe: maintenant,
+    modifieLe: maintenant,
     syncStatus: 'en_attente',
   })
   return nom
@@ -372,12 +389,16 @@ export async function ensureClientExists(nomSaisi: string): Promise<string> {
 export async function ensureFournisseurExists(nomSaisi: string): Promise<string> {
   const nom = nomSaisi.trim()
   if (!nom) return nom
-  const existant = await db.fournisseurs.filter((f) => f.nom.trim().toLowerCase() === nom.toLowerCase()).first()
+  const existant = await db.fournisseurs
+    .filter((f) => !f.supprimeLe && f.nom.trim().toLowerCase() === nom.toLowerCase())
+    .first()
   if (existant) return existant.nom
+  const maintenant = new Date().toISOString()
   await db.fournisseurs.add({
     id: genId('frn'),
     nom,
-    creeLe: new Date().toISOString(),
+    creeLe: maintenant,
+    modifieLe: maintenant,
     syncStatus: 'en_attente',
   })
   return nom

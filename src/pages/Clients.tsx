@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Users, Phone, MapPin, Pencil, Trash2, ChevronRight, FileText } from 'lucide-react'
-import { db, genId, logActivity } from '@/lib/db'
+import { db, genId, logActivity, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -16,8 +16,8 @@ import type { Client, Vente } from '@/types'
 
 export function Clients() {
   const { user } = useAuth()
-  const clients = useLiveQuery(() => db.clients.orderBy('nom').toArray(), [])
-  const ventes = useLiveQuery(() => db.ventes.toArray(), [])
+  const clients = useLiveQuery(() => db.clients.orderBy('nom').toArray().then(filterActive), [])
+  const ventes = useLiveQuery(() => db.ventes.toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
   const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; client: Client } | null>(null)
   const [clientASupprimer, setClientASupprimer] = useState<Client | null>(null)
