@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Plus, Egg, Calendar, Layers, CheckCircle2, Search, Eye } from 'lucide-react'
+import { Plus, Egg, Calendar, Layers, CheckCircle2, Search, Eye, Trash2 } from 'lucide-react'
 import { db, genId, logActivity } from '@/lib/db'
 import type { LotIncubation, Vente } from '@/types'
 import { useAuth } from '@/store/auth'
@@ -12,6 +12,73 @@ import { Modal, FormField, inputClass } from '@/components/ui/Modal'
 
 const DUREE_INCUBATION_JOURS = 21
 
+/**
+ * Modal de confirmation de suppression d'un lot d'incubation
+ */
+function ConfirmationSuppressionModal({
+  lot,
+  onClose,
+  utilisateurNom,
+}: {
+  lot: LotIncubation | null
+  onClose: () => void
+  utilisateurNom: string
+}) {
+  const [envoi, setEnvoi] = useState(false)
+
+  if (!lot) return null
+
+  async function confirmerSuppression() {
+    if (envoi || !lot) return
+    setEnvoi(true)
+
+    try {
+      // Supprimer le lot d'incubation
+      await db.lotsIncubation.delete(lot!.id)
+
+      // Vérifier s'il y a une bande liée et la supprimer aussi
+      const bande = await db.bandesVolaille.where('lotIncubationId').equals(lot!.id).first()
+      if (bande) {
+        await db.bandesVolaille.delete(bande.id)
+        await logActivity(utilisateurNom, 'Suppression de la bande liée', bande.reference)
+      }
+
+      // Logger la suppression
+      await logActivity(utilisateurNom, 'Suppression du lot', lot!.reference)
+
+      setEnvoi(false)
+      onClose()
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+      setEnvoi(false)
+    }
+  }
+
+  return (
+    <Modal open={!!lot} onClose={onClose} title="Confirmer la suppression" width="max-w-md">
+      <div className="space-y-4">
+        <div className="rounded-lg bg-signal-red/8 p-4">
+          <p className="text-sm font-medium text-signal-red">Attention : cette action est irréversible</p>
+          <p className="mt-2 text-sm text-ink-700">
+            Vous êtes sur le point de supprimer le lot <span className="font-mono-data font-medium">{lot.reference}</span>.
+            {lot.statut === 'eclos' && (
+              <span className="mt-2 block text-xs text-ink-700/70">
+                La bande de poussins liée sera également supprimée.
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button onClick={confirmerSuppression} disabled={envoi} variant="danger">
+            {envoi ? 'Suppression…' : 'Supprimer'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 export function Couvoir() {
   const { user } = useAuth()
   const lots = useLiveQuery(() => db.lotsIncubation.orderBy('dateMiseEnCouveuse').reverse().toArray(), [])
@@ -19,6 +86,7 @@ export function Couvoir() {
   const [lotEclosion, setLotEclosion] = useState<LotIncubation | null>(null)
   const [lotMirage, setLotMirage] = useState<{ lot: LotIncubation; etape: 1 | 2 } | null>(null)
   const [lotDetail, setLotDetail] = useState<LotIncubation | null>(null)
+  const [lotASupprimer, setLotASupprimer] = useState<LotIncubation | null>(null)
 
   const peutModifier = user?.role === 'admin' || user?.role === 'technique'
   const enCours = lots?.filter((l) => l.statut === 'en_cours') ?? []
@@ -66,6 +134,7 @@ export function Couvoir() {
                 onEnregistrerEclosion={() => setLotEclosion(lot)}
                 onMirage={(etape) => setLotMirage({ lot, etape })}
                 onDetail={() => setLotDetail(lot)}
+                onSupprimer={() => setLotASupprimer(lot)}
               />
             ))}
           </div>
@@ -113,9 +182,16 @@ export function Couvoir() {
                         {lot.dateEclosionReelle && format(new Date(lot.dateEclosionReelle), 'd MMM yyyy', { locale: fr })}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setLotDetail(lot)}>
-                          <Eye size={13} /> Détail
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => setLotDetail(lot)}>
+                            <Eye size={13} /> Détail
+                          </Button>
+                          {peutModifier && (
+                            <Button size="sm" variant="ghost" onClick={() => setLotASupprimer(lot)}>
+                              <Trash2 size={13} />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -135,6 +211,11 @@ export function Couvoir() {
         utilisateurNom={user?.nom ?? ''}
       />
       <LotDetailModal lot={lotDetail} onClose={() => setLotDetail(null)} />
+      <ConfirmationSuppressionModal
+        lot={lotASupprimer}
+        onClose={() => setLotASupprimer(null)}
+        utilisateurNom={user?.nom ?? ''}
+      />
     </div>
   )
 }
@@ -145,12 +226,14 @@ function LotEnCoursCard({
   onEnregistrerEclosion,
   onMirage,
   onDetail,
+  onSupprimer,
 }: {
   lot: LotIncubation
   peutModifier: boolean
   onEnregistrerEclosion: () => void
   onMirage: (etape: 1 | 2) => void
   onDetail: () => void
+  onSupprimer: () => void
 }) {
   const joursEcoules = differenceInCalendarDays(new Date(), new Date(lot.dateMiseEnCouveuse))
   const pct = Math.min(100, Math.max(0, Math.round((joursEcoules / DUREE_INCUBATION_JOURS) * 100)))
@@ -171,9 +254,16 @@ function LotEnCoursCard({
               <p className="font-mono-data text-xs font-medium text-ink-700/70">{lot.reference}</p>
               <p className="mt-0.5 truncate font-display text-base font-semibold text-ink-950">{lot.couveuse}</p>
             </div>
-            <button onClick={onDetail} className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700">
-              <Eye size={15} />
-            </button>
+            <div className="flex gap-1">
+              <button onClick={onDetail} className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700">
+                <Eye size={15} />
+              </button>
+              {peutModifier && (
+                <button onClick={onSupprimer} className="shrink-0 rounded-md p-1 text-signal-red/40 hover:bg-signal-red/8 hover:text-signal-red">
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700/70">
             <span className="flex items-center gap-1">
