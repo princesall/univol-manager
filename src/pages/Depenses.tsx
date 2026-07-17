@@ -4,6 +4,7 @@ import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Receipt, PieChart, TrendingDown, Pencil, Trash2 } from 'lucide-react'
 import { db, genId, genReference, logActivity } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, StatCard, EmptyState } from '@/components/ui/Primitives'
@@ -58,7 +59,7 @@ export function Depenses() {
 
   async function confirmerSuppression() {
     if (!depenseASupprimer) return
-    await db.depenses.delete(depenseASupprimer.id)
+    await markForDelete('depenses', depenseASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression de dépense', depenseASupprimer.description)
     setDepenseASupprimer(null)
   }

@@ -4,6 +4,7 @@ import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Bird, Skull, Calendar, Link2, PackageCheck, Syringe, Plus, Trash2 } from 'lucide-react'
 import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import type { BandeVolaille, Vente, SoinSante, TypeSoin } from '@/types'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -44,7 +45,7 @@ export function Poulailler() {
 
   async function confirmerSuppressionBande() {
     if (!bandeASupprimer) return
-    await db.bandesVolaille.delete(bandeASupprimer.id)
+    await markForDelete('bandesVolaille', bandeASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression de la bande', bandeASupprimer.reference)
     setBandeASupprimer(null)
   }
@@ -546,7 +547,7 @@ function SanteModal({
 
   async function confirmerSuppressionSoin() {
     if (!soinASupprimer) return
-    await db.soinsSante.delete(soinASupprimer.id)
+    await markForDelete('soinsSante', soinASupprimer.id)
     await logActivity(utilisateurNom, 'Suppression d\u2019un soin', soinASupprimer.nom)
     setSoinASupprimer(null)
   }

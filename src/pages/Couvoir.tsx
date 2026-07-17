@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Plus, Egg, Calendar, Layers, CheckCircle2, Search, Eye, Trash2 } from 'lucide-react'
+import { Plus, Egg, Calendar, Layers, CheckCircle2, Search, Eye, Trash2, Pencil } from 'lucide-react'
 import { db, genId, logActivity } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import type { LotIncubation, Vente } from '@/types'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -33,28 +34,22 @@ function ConfirmationSuppressionModal({
     setEnvoi(true)
 
     try {
+      // ✅ Utiliser soft delete avec markForDelete
       // Supprimer le lot d'incubation
-      await db.lotsIncubation.delete(lot!.id)
+      await markForDelete('lotsIncubation', lot!.id)
 
       // Vérifier s'il y a une bande liée et la supprimer aussi
       const bande = await db.bandesVolaille.where('lotIncubationId').equals(lot!.id).first()
       if (bande) {
-        await db.bandesVolaille.delete(bande.id)
+        await markForDelete('bandesVolaille', bande.id)
         await logActivity(utilisateurNom, 'Suppression de la bande liée', bande.reference)
       }
 
       // Logger la suppression
       await logActivity(utilisateurNom, 'Suppression du lot', lot!.reference)
 
-      // Supprimer de Supabase si configuré
-      const { getSupabaseClient } = await import('@/lib/supabase')
-      const supabase = getSupabaseClient()
-      if (supabase) {
-        await supabase.from('lots_incubation').delete().eq('id', lot!.id)
-        if (bande) {
-          await supabase.from('bandes_volaille').delete().eq('id', bande.id)
-        }
-      }
+      // Note: La synchronisation gérera la suppression côté Supabase
+      // via le champ supprime_le et la logique de sync incrémentale
 
       setEnvoi(false)
       onClose()
@@ -92,7 +87,7 @@ function ConfirmationSuppressionModal({
 export function Couvoir() {
   const { user } = useAuth()
   const lots = useLiveQuery(() => db.lotsIncubation.orderBy('dateMiseEnCouveuse').reverse().toArray(), [])
-  const [openNouveau, setOpenNouveau] = useState(false)
+  const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; lot: LotIncubation } | null>(null)
   const [lotEclosion, setLotEclosion] = useState<LotIncubation | null>(null)
   const [lotMirage, setLotMirage] = useState<{ lot: LotIncubation; etape: 1 | 2 } | null>(null)
   const [lotDetail, setLotDetail] = useState<LotIncubation | null>(null)
@@ -112,7 +107,7 @@ export function Couvoir() {
           </p>
         </div>
         {peutModifier && (
-          <Button onClick={() => setOpenNouveau(true)}>
+          <Button onClick={() => setModal({ mode: 'creer' })}>
             <Plus size={16} /> Nouveau lot
           </Button>
         )}
@@ -128,7 +123,7 @@ export function Couvoir() {
             description="Les lots que vous mettez en couveuse apparaîtront ici avec leur progression jusqu'à l'éclosion."
             action={
               peutModifier && (
-                <Button size="sm" onClick={() => setOpenNouveau(true)}>
+                <Button size="sm" onClick={() => setModal({ mode: 'creer' })}>
                   <Plus size={14} /> Créer un lot
                 </Button>
               )
@@ -144,6 +139,7 @@ export function Couvoir() {
                 onEnregistrerEclosion={() => setLotEclosion(lot)}
                 onMirage={(etape) => setLotMirage({ lot, etape })}
                 onDetail={() => setLotDetail(lot)}
+                onModifier={() => setModal({ mode: 'modifier', lot })}
                 onSupprimer={() => setLotASupprimer(lot)}
               />
             ))}
@@ -197,9 +193,14 @@ export function Couvoir() {
                             <Eye size={13} /> Détail
                           </Button>
                           {peutModifier && (
-                            <Button size="sm" variant="ghost" onClick={() => setLotASupprimer(lot)}>
-                              <Trash2 size={13} />
-                            </Button>
+                            <>
+                              <Button size="sm" variant="ghost" onClick={() => setModal({ mode: 'modifier', lot })} title="Modifier">
+                                <Pencil size={13} />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setLotASupprimer(lot)}>
+                                <Trash2 size={13} />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -212,7 +213,12 @@ export function Couvoir() {
         </Card>
       </section>
 
-      <NouveauLotModal open={openNouveau} onClose={() => setOpenNouveau(false)} utilisateurNom={user?.nom ?? ''} />
+      <LotFormModal
+        open={!!modal}
+        lotExistant={modal?.mode === 'modifier' ? modal.lot : null}
+        onClose={() => setModal(null)}
+        utilisateurNom={user?.nom ?? ''}
+      />
       <EnregistrerEclosionModal lot={lotEclosion} onClose={() => setLotEclosion(null)} utilisateurNom={user?.nom ?? ''} />
       <MirageModal
         lot={lotMirage?.lot ?? null}
@@ -236,6 +242,7 @@ function LotEnCoursCard({
   onEnregistrerEclosion,
   onMirage,
   onDetail,
+  onModifier,
   onSupprimer,
 }: {
   lot: LotIncubation
@@ -243,6 +250,7 @@ function LotEnCoursCard({
   onEnregistrerEclosion: () => void
   onMirage: (etape: 1 | 2) => void
   onDetail: () => void
+  onModifier: () => void
   onSupprimer: () => void
 }) {
   const joursEcoules = differenceInCalendarDays(new Date(), new Date(lot.dateMiseEnCouveuse))
@@ -265,13 +273,18 @@ function LotEnCoursCard({
               <p className="mt-0.5 truncate font-display text-base font-semibold text-ink-950">{lot.couveuse}</p>
             </div>
             <div className="flex gap-1">
-              <button onClick={onDetail} className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700">
+              <button onClick={onDetail} className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700" title="Détail">
                 <Eye size={15} />
               </button>
               {peutModifier && (
-                <button onClick={onSupprimer} className="shrink-0 rounded-md p-1 text-signal-red/40 hover:bg-signal-red/8 hover:text-signal-red">
-                  <Trash2 size={15} />
-                </button>
+                <>
+                  <button onClick={onModifier} className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700" title="Modifier">
+                    <Pencil size={15} />
+                  </button>
+                  <button onClick={onSupprimer} className="shrink-0 rounded-md p-1 text-signal-red/40 hover:bg-signal-red/8 hover:text-signal-red" title="Supprimer">
+                    <Trash2 size={15} />
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -331,12 +344,14 @@ function LotEnCoursCard({
   )
 }
 
-function NouveauLotModal({
+function LotFormModal({
   open,
+  lotExistant,
   onClose,
   utilisateurNom,
 }: {
   open: boolean
+  lotExistant: LotIncubation | null
   onClose: () => void
   utilisateurNom: string
 }) {
@@ -346,7 +361,29 @@ function NouveauLotModal({
   const [couveuse, setCouveuse] = useState('')
   const [fournisseur, setFournisseur] = useState('')
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [cle, setCle] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(false)
+
+  const estModification = !!lotExistant
+
+  if (open && lotExistant && cle !== lotExistant.id) {
+    setCle(lotExistant.id)
+    setReference(lotExistant.reference)
+    setQuantiteCommandee(lotExistant.quantiteCommandee ? String(lotExistant.quantiteCommandee) : '')
+    setQuantite(String(lotExistant.quantiteOeufs))
+    setCouveuse(lotExistant.couveuse)
+    setFournisseur(lotExistant.fournisseurNom ?? '')
+    setDate(format(new Date(lotExistant.dateMiseEnCouveuse), 'yyyy-MM-dd'))
+  }
+  if (open && !lotExistant && cle !== 'nouveau') {
+    setCle('nouveau')
+    setReference('')
+    setQuantiteCommandee('')
+    setQuantite('')
+    setCouveuse('')
+    setFournisseur('')
+    setDate(format(new Date(), 'yyyy-MM-dd'))
+  }
 
   async function submit() {
     if (!reference || !quantite || !couveuse || envoi) return
@@ -354,6 +391,25 @@ function NouveauLotModal({
     const dateMiseEnCouveuse = new Date(date)
     const dateEclosionPrevue = new Date(dateMiseEnCouveuse)
     dateEclosionPrevue.setDate(dateEclosionPrevue.getDate() + DUREE_INCUBATION_JOURS)
+    const maintenant = new Date().toISOString()
+
+    if (estModification && lotExistant) {
+      await db.lotsIncubation.update(lotExistant.id, {
+        reference,
+        quantiteCommandee: quantiteCommandee ? Number(quantiteCommandee) : undefined,
+        dateMiseEnCouveuse: dateMiseEnCouveuse.toISOString(),
+        dateEclosionPrevue: dateEclosionPrevue.toISOString(),
+        quantiteOeufs: Number(quantite),
+        couveuse,
+        fournisseurNom: fournisseur || undefined,
+        modifieLe: maintenant,
+        syncStatus: 'en_attente',
+      })
+      await logActivity(utilisateurNom, 'Modification du lot', reference)
+      setEnvoi(false)
+      onClose()
+      return
+    }
 
     const nouveauLot: LotIncubation = {
       id: genId('lot'),
@@ -366,8 +422,8 @@ function NouveauLotModal({
       fournisseurNom: fournisseur || undefined,
       statut: 'en_cours',
       creePar: utilisateurNom,
-      creeLe: new Date().toISOString(),
-      modifieLe: new Date().toISOString(),
+      creeLe: maintenant,
+      modifieLe: maintenant,
       syncStatus: 'en_attente',
     }
     await db.lotsIncubation.add(nouveauLot)
@@ -382,7 +438,7 @@ function NouveauLotModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nouveau lot d'incubation">
+    <Modal open={open} onClose={onClose} title={estModification ? `Modifier le lot — ${lotExistant?.reference}` : "Nouveau lot d'incubation"}>
       <div className="space-y-4">
         <FormField label="Référence du lot">
           <input
@@ -441,7 +497,9 @@ function NouveauLotModal({
         </p>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Annuler</Button>
-          <Button onClick={submit} disabled={envoi}>{envoi ? 'Création…' : 'Créer le lot'}</Button>
+          <Button onClick={submit} disabled={envoi}>
+            {envoi ? 'Enregistrement…' : estModification ? 'Enregistrer les modifications' : 'Créer le lot'}
+          </Button>
         </div>
       </div>
     </Modal>

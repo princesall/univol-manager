@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Boxes, PackageCheck, AlertTriangle, Bird, ArrowDownCircle, ArrowUpCircle, Minus, Trash2 } from 'lucide-react'
 import { db, genId, logActivity, enregistrerSortieStock } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, StatCard, EmptyState } from '@/components/ui/Primitives'
@@ -44,7 +45,7 @@ export function Stocks() {
 
   async function confirmerSuppressionItem() {
     if (!itemASupprimer) return
-    await db.stockItems.delete(itemASupprimer.id)
+    await markForDelete('stockItems', itemASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression d\u2019article', itemASupprimer.nom)
     setItemASupprimer(null)
   }
@@ -74,7 +75,7 @@ export function Stocks() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Volaille disponible"
-          value={effectifVolaille.toLocaleString('fr-FR')}
+          value={(effectifVolaille ?? 0).toLocaleString('fr-FR')}
           sub={`${(bandes ?? []).length} bande(s) en élevage`}
           icon={<Bird size={18} />}
           accent="moss"

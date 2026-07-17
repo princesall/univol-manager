@@ -4,6 +4,7 @@ import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, ShoppingCart, Clock3, TrendingUp, Pencil, Trash2, CircleDollarSign } from 'lucide-react'
 import { db, genId, genReference, logActivity, ensureFournisseurExists, enregistrerEntreeStock } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, StatCard, EmptyState } from '@/components/ui/Primitives'
@@ -51,7 +52,7 @@ export function Achats() {
 
   async function confirmerSuppression() {
     if (!achatASupprimer) return
-    await db.achats.delete(achatASupprimer.id)
+    await markForDelete('achats', achatASupprimer.id)
     await logActivity(user?.nom ?? '', "Suppression d'achat", achatASupprimer.reference)
     setAchatASupprimer(null)
   }

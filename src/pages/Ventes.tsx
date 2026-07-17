@@ -4,6 +4,7 @@ import { format, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Wallet, Clock3, TrendingUp, FileText, Pencil, Trash2, CircleDollarSign } from 'lucide-react'
 import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisBande, annulerVenteBande, vendreDepuisLotBetail, annulerVenteLotBetail } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, StatCard, EmptyState } from '@/components/ui/Primitives'
@@ -56,7 +57,7 @@ export function Ventes() {
 
   async function confirmerSuppression() {
     if (!venteASupprimer) return
-    await db.ventes.delete(venteASupprimer.id)
+    await markForDelete('ventes', venteASupprimer.id)
     // Si cette vente était liée à une bande du Poulailler ou à un lot de
     // Bétail, on restitue la quantité vendue à son effectif (et on la
     // rouvre si besoin) — sinon les sujets "disparaissent" du système.
@@ -91,14 +92,14 @@ export function Ventes() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Chiffre d'affaires du mois"
-          value={`${caMois.toLocaleString('fr-FR')} FCFA`}
+          value={`${(caMois ?? 0).toLocaleString('fr-FR')} FCFA`}
           sub={`${ceMois.length} vente(s) ce mois-ci`}
           icon={<TrendingUp size={18} />}
           accent="moss"
         />
         <StatCard
           label="Montant en attente"
-          value={`${enAttente.toLocaleString('fr-FR')} FCFA`}
+          value={`${(enAttente ?? 0).toLocaleString('fr-FR')} FCFA`}
           sub="Toutes ventes non soldées"
           icon={<Clock3 size={18} />}
           accent="clay"
@@ -155,9 +156,9 @@ export function Ventes() {
                       <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{v.reference}</td>
                       <td className="px-5 py-3.5 text-ink-900">{v.clientNom}</td>
                       <td className="px-5 py-3.5 text-ink-700">{LABEL_TYPE[v.type]}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{v.quantite.toLocaleString('fr-FR')}</td>
+                      <td className="px-5 py-3.5 text-ink-700">{(v.quantite ?? 0).toLocaleString('fr-FR')}</td>
                       <td className="px-5 py-3.5 font-medium text-ink-900">
-                        {v.montantTotal.toLocaleString('fr-FR')} FCFA
+                        {(v.montantTotal ?? 0).toLocaleString('fr-FR')} FCFA
                       </td>
                       <td className="px-5 py-3.5">
                         <Badge tone={TONE_STATUT[v.statutPaiement]}>{LABEL_STATUT[v.statutPaiement]}</Badge>
@@ -456,7 +457,7 @@ function VenteFormModal({
               <option value="">Aucune — vente non liée à une bande</option>
               {(bandesDisponibles ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.reference} — {b.effectifActuel.toLocaleString('fr-FR')} disponibles
+                  {b.reference} — {(b.effectifActuel ?? 0).toLocaleString('fr-FR')} disponibles
                 </option>
               ))}
             </select>
@@ -480,7 +481,7 @@ function VenteFormModal({
               <option value="">Aucun — vente non liée à un lot</option>
               {(lotsBetailDisponibles ?? []).filter((l) => l.categorie === type).map((l) => (
                 <option key={l.id} value={l.id}>
-                  {l.reference} — {l.effectifActuel.toLocaleString('fr-FR')} disponibles
+                  {l.reference} — {(l.effectifActuel ?? 0).toLocaleString('fr-FR')} disponibles
                 </option>
               ))}
             </select>
@@ -534,7 +535,7 @@ function VenteFormModal({
           <div className="flex items-center justify-between rounded-lg bg-yolk-500/10 px-3.5 py-2.5">
             <span className="text-xs font-medium text-yolk-700">Montant total</span>
             <span className="font-display text-lg font-semibold text-yolk-700">
-              {montantTotal.toLocaleString('fr-FR')} FCFA
+              {(montantTotal ?? 0).toLocaleString('fr-FR')} FCFA
             </span>
           </div>
         )}
@@ -570,7 +571,7 @@ function VenteFormModal({
               <p className="mt-1.5 text-[11px] text-ink-700/50">
                 {Number(montantPayeSaisi) >= montantTotal && montantPayeSaisi
                   ? 'Ce montant couvre le total — la vente sera enregistrée comme "Payé".'
-                  : `Reste à payer : ${Math.max(0, montantTotal - (Number(montantPayeSaisi) || 0)).toLocaleString('fr-FR')} FCFA`}
+                  : `Reste à payer : ${(Math.max(0, montantTotal - (Number(montantPayeSaisi) || 0)) ?? 0).toLocaleString('fr-FR')} FCFA`}
               </p>
             )}
           </FormField>
@@ -621,7 +622,7 @@ function PaiementModal({
       modifieLe: new Date().toISOString(),
       syncStatus: 'en_attente',
     })
-    await logActivity(utilisateurNom, 'Paiement reçu', `${vente.reference} — ${montantSaisi.toLocaleString('fr-FR')} FCFA`)
+    await logActivity(utilisateurNom, 'Paiement reçu', `${vente.reference} — ${(montantSaisi ?? 0).toLocaleString('fr-FR')} FCFA`)
     setMontant('')
     onClose()
   }
@@ -630,16 +631,16 @@ function PaiementModal({
     <Modal open={!!vente} onClose={onClose} title={`Enregistrer un paiement — ${vente.reference}`} width="max-w-sm">
       <div className="space-y-4">
         <div className="space-y-1.5 rounded-lg bg-ink-900/[0.03] px-3.5 py-3 text-xs text-ink-700">
-          <div className="flex justify-between"><span>Montant total</span><span className="font-medium text-ink-900">{vente.montantTotal.toLocaleString('fr-FR')} FCFA</span></div>
-          <div className="flex justify-between"><span>Déjà versé</span><span className="font-medium text-ink-900">{vente.montantPaye.toLocaleString('fr-FR')} FCFA</span></div>
-          <div className="flex justify-between border-t border-ink-900/10 pt-1.5"><span className="font-medium text-clay-600">Reste à payer</span><span className="font-semibold text-clay-600">{resteActuel.toLocaleString('fr-FR')} FCFA</span></div>
+          <div className="flex justify-between"><span>Montant total</span><span className="font-medium text-ink-900">{(vente.montantTotal ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
+          <div className="flex justify-between"><span>Déjà versé</span><span className="font-medium text-ink-900">{(vente.montantPaye ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
+          <div className="flex justify-between border-t border-ink-900/10 pt-1.5"><span className="font-medium text-clay-600">Reste à payer</span><span className="font-semibold text-clay-600">{(resteActuel ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
         </div>
         <FormField label="Montant reçu maintenant (FCFA)">
           <input
             type="number"
             min={0}
             className={inputClass}
-            placeholder={`Jusqu'à ${resteActuel.toLocaleString('fr-FR')}`}
+            placeholder={`Jusqu'à ${(resteActuel ?? 0).toLocaleString('fr-FR')}`}
             value={montant}
             onChange={(e) => setMontant(e.target.value)}
           />
@@ -650,7 +651,7 @@ function PaiementModal({
               {nouveauReste <= 0 ? 'Vente entièrement soldée' : 'Nouveau reste à payer'}
             </span>
             <span className="font-display text-lg font-semibold text-moss-600">
-              {nouveauReste <= 0 ? '0 FCFA' : `${nouveauReste.toLocaleString('fr-FR')} FCFA`}
+              {nouveauReste <= 0 ? '0 FCFA' : `${(nouveauReste ?? 0).toLocaleString('fr-FR')} FCFA`}
             </span>
           </div>
         )}

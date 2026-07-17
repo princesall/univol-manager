@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Users, Phone, MapPin, Pencil, Trash2, ChevronRight, FileText } from 'lucide-react'
 import { db, genId, logActivity } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, EmptyState } from '@/components/ui/Primitives'
@@ -37,7 +38,7 @@ export function Clients() {
 
   async function confirmerSuppression() {
     if (!clientASupprimer) return
-    await db.clients.delete(clientASupprimer.id)
+    await markForDelete('clients', clientASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression du client', clientASupprimer.nom)
     setClientASupprimer(null)
   }

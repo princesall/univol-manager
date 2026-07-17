@@ -3,12 +3,12 @@ import type { AppUser, Role } from '@/types'
 import { getSupabaseClient } from '@/lib/supabase'
 import { startAutoSync } from '@/lib/sync'
 
-// Mots de passe prédéfinis par rôle
+// Mots de passe prédéfinis par rôle (chargeables depuis les variables d'environnement)
 const MOTS_DE_PASSE: Record<Role, string> = {
-  admin: '7643',
-  commercial: '7494',
-  technique: '7009',
-  observateur: '7959',
+  admin: import.meta.env.VITE_PIN_ADMIN || '7643',
+  commercial: import.meta.env.VITE_PIN_COMMERCIAL || '7494',
+  technique: import.meta.env.VITE_PIN_TECHNIQUE || '7009',
+  observateur: import.meta.env.VITE_PIN_OBSERVATEUR || '7959',
 }
 
 // Utilisateurs prédéfinis

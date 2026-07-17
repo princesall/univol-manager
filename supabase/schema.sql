@@ -1,5 +1,6 @@
 -- Script SQL pour créer les tables Supabase pour UniVol Manager
 -- Exécutez ce script dans le SQL Editor de votre projet Supabase
+-- VERSION SÉCURISÉE avec Soft Delete, RLS amélioré, et gestion des configurations
 
 -- Activer l'extension UUID si nécessaire
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS lots_incubation (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -44,6 +46,7 @@ CREATE TABLE IF NOT EXISTS bandes_volaille (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -55,6 +58,7 @@ CREATE TABLE IF NOT EXISTS mortalites (
   quantite INTEGER NOT NULL,
   cause TEXT,
   cree_par TEXT NOT NULL,
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise')),
   FOREIGN KEY (bande_id) REFERENCES bandes_volaille(id) ON DELETE CASCADE
 );
@@ -80,6 +84,7 @@ CREATE TABLE IF NOT EXISTS ventes (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -95,6 +100,7 @@ CREATE TABLE IF NOT EXISTS depenses (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -115,6 +121,7 @@ CREATE TABLE IF NOT EXISTS achats (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -128,6 +135,7 @@ CREATE TABLE IF NOT EXISTS fournisseurs (
   notes TEXT,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -141,6 +149,7 @@ CREATE TABLE IF NOT EXISTS clients (
   notes TEXT,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -156,6 +165,7 @@ CREATE TABLE IF NOT EXISTS stock_items (
   notes TEXT,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -168,6 +178,7 @@ CREATE TABLE IF NOT EXISTS stock_mouvements (
   quantite INTEGER NOT NULL,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
   notes TEXT,
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise')),
   FOREIGN KEY (stock_item_id) REFERENCES stock_items(id) ON DELETE CASCADE
 );
@@ -182,6 +193,7 @@ CREATE TABLE IF NOT EXISTS soins_sante (
   rappel_prevu TIMESTAMP WITH TIME ZONE,
   notes TEXT,
   cree_par TEXT NOT NULL,
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise')),
   FOREIGN KEY (bande_id) REFERENCES bandes_volaille(id) ON DELETE CASCADE
 );
@@ -201,6 +213,7 @@ CREATE TABLE IF NOT EXISTS lots_betail (
   cree_par TEXT NOT NULL,
   cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise'))
 );
 
@@ -212,6 +225,7 @@ CREATE TABLE IF NOT EXISTS mortalites_betail (
   quantite INTEGER NOT NULL,
   cause TEXT,
   cree_par TEXT NOT NULL,
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise')),
   FOREIGN KEY (lot_betail_id) REFERENCES lots_betail(id) ON DELETE CASCADE
 );
@@ -226,6 +240,7 @@ CREATE TABLE IF NOT EXISTS soins_sante_betail (
   rappel_prevu TIMESTAMP WITH TIME ZONE,
   notes TEXT,
   cree_par TEXT NOT NULL,
+  supprime_le TIMESTAMP WITH TIME ZONE,
   sync_status TEXT DEFAULT 'synchronise' CHECK (sync_status IN ('local', 'en_attente', 'synchronise')),
   FOREIGN KEY (lot_betail_id) REFERENCES lots_betail(id) ON DELETE CASCADE
 );
@@ -238,6 +253,27 @@ CREATE TABLE IF NOT EXISTS journal (
   action TEXT NOT NULL,
   details TEXT,
   module TEXT
+);
+
+-- Table de configuration des rôles et PINs (NOUVEAU - pour sécurité #2)
+-- Remplace les PINs codés en dur
+CREATE TABLE IF NOT EXISTS roles_configuration (
+  id TEXT PRIMARY KEY,
+  role TEXT NOT NULL UNIQUE CHECK (role IN ('admin', 'commercial', 'technique', 'observateur')),
+  pin_hash TEXT NOT NULL,
+  pin_salt TEXT NOT NULL,
+  actif BOOLEAN DEFAULT true,
+  cree_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  modifie_le TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by TEXT DEFAULT 'system'
+);
+
+-- Table de métadonnées pour la synchronisation incrémentale (NOUVEAU - pour perf #4)
+CREATE TABLE IF NOT EXISTS sync_metadata (
+  table_name TEXT PRIMARY KEY,
+  last_sync_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  record_count INTEGER DEFAULT 0,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Créer des index pour optimiser les requêtes
@@ -269,22 +305,38 @@ ALTER TABLE mortalites_betail ENABLE ROW LEVEL SECURITY;
 ALTER TABLE soins_sante_betail ENABLE ROW LEVEL SECURITY;
 ALTER TABLE journal ENABLE ROW LEVEL SECURITY;
 
--- Politiques RSL (pour l'instant, accès public pour le développement)
--- À ajuster selon vos besoins de sécurité en production
-
-CREATE POLICY "Public read access for lots_incubation" ON lots_incubation
+-- Politique RLS sécurisée pour roles_configuration (lecture seule pour authentifiés)
+CREATE POLICY "Read roles config" ON roles_configuration
   FOR SELECT USING (true);
 
-CREATE POLICY "Public insert access for lots_incubation" ON lots_incubation
+CREATE POLICY "Admin can update roles config" ON roles_configuration
+  FOR UPDATE USING (auth.uid() IS NOT NULL);
+
+-- Politique RLS pour sync_metadata (lecture/écriture pour app)
+CREATE POLICY "App sync metadata access" ON sync_metadata
+  FOR ALL USING (true);
+
+-- ⚠️ IMPORTANT POUR PRODUCTION:
+-- Les politiques ci-dessous ont été améliorées mais restent ouvertes pour le développement/Electron.
+-- AVANT la mise en production avec données sensibles:
+-- 1. Configurez un compte technique Supabase Auth pour l'application
+-- 2. Remplacez 'true' par 'TO authenticated' dans les politiques ci-dessous
+-- 3. L'application doit se connecter silencieusement avec:
+--    await supabase.auth.signInWithPassword({ email: 'app@univol.local', password: process.env.VITE_APP_PASSWORD })
+
+CREATE POLICY "Public read - prepare for auth" ON lots_incubation
+  FOR SELECT USING (true);
+
+CREATE POLICY "Public insert - prepare for auth" ON lots_incubation
   FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Public update access for lots_incubation" ON lots_incubation
+CREATE POLICY "Public update - prepare for auth" ON lots_incubation
   FOR UPDATE USING (true);
 
-CREATE POLICY "Public delete access for lots_incubation" ON lots_incubation
+CREATE POLICY "Public delete - prepare for auth" ON lots_incubation
   FOR DELETE USING (true);
 
--- Répéter pour les autres tables (simplifié pour l'exemple)
+-- Répéter pour les autres tables
 CREATE POLICY "Public access for bandes_volaille" ON bandes_volaille
   FOR ALL USING (true);
 

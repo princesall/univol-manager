@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Truck, Phone, MapPin, Pencil, Trash2, ChevronRight } from 'lucide-react'
 import { db, genId, logActivity } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, EmptyState } from '@/components/ui/Primitives'
@@ -35,7 +36,7 @@ export function Fournisseurs() {
 
   async function confirmerSuppression() {
     if (!fournisseurASupprimer) return
-    await db.fournisseurs.delete(fournisseurASupprimer.id)
+    await markForDelete('fournisseurs', fournisseurASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression du fournisseur', fournisseurASupprimer.nom)
     setFournisseurASupprimer(null)
   }

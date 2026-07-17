@@ -4,6 +4,7 @@ import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Plus, Beef, Calendar, Skull, Syringe, Trash2, PackageCheck } from 'lucide-react'
 import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisLotBetail } from '@/lib/db'
+import { markForDelete } from '@/lib/sync'
 import type { CategorieBetail, LotBetail, SourceAcquisitionBetail, TypeSoin, Vente, SoinSanteBetail } from '@/types'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
@@ -47,7 +48,7 @@ export function Betail() {
 
   async function confirmerSuppression() {
     if (!lotASupprimer) return
-    await db.lotsBetail.delete(lotASupprimer.id)
+    await markForDelete('lotsBetail', lotASupprimer.id)
     await logActivity(user?.nom ?? '', 'Suppression du lot de bétail', lotASupprimer.reference)
     setLotASupprimer(null)
   }
@@ -483,7 +484,7 @@ function SanteBetailModal({
 
   async function confirmerSuppressionSoin() {
     if (!soinASupprimer) return
-    await db.soinsSanteBetail.delete(soinASupprimer.id)
+    await markForDelete('soinsSanteBetail', soinASupprimer.id)
     await logActivity(utilisateurNom, 'Suppression d\u2019un soin (bétail)', soinASupprimer.nom)
     setSoinASupprimer(null)
   }
