@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import {
 import clsx from 'clsx'
 import { useAuth, ROLE_LABELS, ROLE_MODULE_ACCESS } from '@/store/auth'
 import { SyncIndicator } from '@/components/layout/SyncIndicator'
+import { startAutoSync, stopAutoSync } from '@/lib/sync'
 
 const NAV_ITEMS = [
   { key: 'dashboard', to: '/', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -41,6 +42,17 @@ export function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOuvert, setMenuOuvert] = useState(false)
+
+  // ✅ Lancer la synchronisation automatique au montage du composant
+  useEffect(() => {
+    console.log('🔄 Démarrage de la synchronisation automatique...')
+    startAutoSync(60000) // Sync toutes les 60 secondes
+
+    return () => {
+      console.log('🛑 Arrêt de la synchronisation automatique')
+      stopAutoSync()
+    }
+  }, [])
 
   if (!user) return null
 
