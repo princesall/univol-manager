@@ -46,6 +46,16 @@ function ConfirmationSuppressionModal({
       // Logger la suppression
       await logActivity(utilisateurNom, 'Suppression du lot', lot!.reference)
 
+      // Supprimer de Supabase si configuré
+      const { getSupabaseClient } = await import('@/lib/supabase')
+      const supabase = getSupabaseClient()
+      if (supabase) {
+        await supabase.from('lots_incubation').delete().eq('id', lot!.id)
+        if (bande) {
+          await supabase.from('bandes_volaille').delete().eq('id', bande.id)
+        }
+      }
+
       setEnvoi(false)
       onClose()
     } catch (error) {
