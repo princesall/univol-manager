@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowRight } from 'lucide-react'
+import { Lock, ArrowRight, Sparkles } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { assetUrl } from '@/lib/assets'
+
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
 
 export function Login() {
   const [motDePasse, setMotDePasse] = useState('')
@@ -43,7 +45,7 @@ export function Login() {
         </div>
 
         <p className="relative text-xs text-parchment-100/40">
-          UniVol Mali — Bamako
+          UniVol Mali — Bamako · v{APP_VERSION}
         </p>
       </div>
 
@@ -54,6 +56,21 @@ export function Login() {
             <div className="mb-3 inline-flex items-center gap-2">
               <img src={assetUrl('logo.jpg')} alt="UniVol Mali" className="h-9 w-9 rounded-full object-cover" />
               <p className="font-display text-lg font-semibold">UniVol Manager</p>
+            </div>
+          </div>
+
+          {/* Message de bienvenue — visible pour confirmer version / mise à jour */}
+          <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-yolk-500/25 bg-yolk-500/10 px-3.5 py-3">
+            <Sparkles size={16} className="mt-0.5 shrink-0 text-yolk-600" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-ink-950">
+                Bienvenue sur UniVol Manager
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-700/75">
+                Gestion couvoir, poulailler et stocks — UniVol Mali.
+                {' '}
+                <span className="font-medium text-ink-900">Version {APP_VERSION}</span>
+              </p>
             </div>
           </div>
 
