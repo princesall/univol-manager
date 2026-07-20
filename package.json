@@ -2,14 +2,21 @@
   "name": "univol-manager",
   "private": true,
   "version": "0.1.0",
+  "description": "Application de gestion de couvoir et poulailler UniVol Mali",
+  "author": "UniVol Mali",
   "type": "module",
   "main": "electron/main.cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/princesall/univol-manager.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "electron:dev": "ELECTRON_START_URL=http://localhost:5173 electron .",
-    "electron:build": "npm run build && electron-builder"
+    "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder --win nsis --publish never",
+    "electron:publish": "npm run build && electron-builder --win nsis --publish always"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",
@@ -18,6 +25,7 @@
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
     "docx": "^9.7.1",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -31,7 +39,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "electron": "^43.0.0",
-    "electron-builder": "^26.15.3",
+    "electron-builder": "^26.4.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
@@ -41,16 +49,36 @@
   "build": {
     "appId": "ml.univol.manager",
     "productName": "UniVol Manager",
+    "artifactName": "UniVol-Manager-Setup-${version}.${ext}",
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "package.json"
     ],
     "directories": {
       "output": "release"
     },
+    "npmRebuild": false,
+    "publish": {
+      "provider": "github",
+      "owner": "princesall",
+      "repo": "univol-manager",
+      "releaseType": "release",
+      "vPrefixedTagName": true
+    },
     "win": {
-      "target": "nsis",
-      "icon": "public/icon-512.png"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon-512.png",
+      "publish": [
+        "github"
+      ]
     },
     "mac": {
       "target": "dmg",
@@ -63,7 +91,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "shortcutName": "UniVol Manager",
+      "uninstallDisplayName": "UniVol Manager",
+      "deleteAppDataOnUninstall": false
     }
   }
 }

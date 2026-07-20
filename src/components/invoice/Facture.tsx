@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ENTREPRISE } from '@/config/entreprise'
+import { assetUrl } from '@/lib/assets'
 import type { Vente } from '@/types'
 
 const LABEL_TYPE: Record<string, string> = {
@@ -30,7 +31,7 @@ export function Facture({ vente }: { vente: Vente }) {
       {/* En-tête */}
       <div className="flex items-start justify-between border-b-2 border-ink-950 pb-6">
         <div className="flex items-center gap-3">
-          <img src="/logo.jpg" alt={ENTREPRISE.nom} className="h-16 w-16 shrink-0 rounded-full object-cover" />
+          <img src={assetUrl('logo.jpg')} alt={ENTREPRISE.nom} className="h-16 w-16 shrink-0 rounded-full object-cover" />
           <div>
             <p className="font-display text-xl font-bold leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
               {ENTREPRISE.nom}

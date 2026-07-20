@@ -20,6 +20,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ENTREPRISE } from '@/config/entreprise'
+import { assetUrl } from '@/lib/assets'
 
 // Palette reprise du design system de l'app.
 const VERT_FONCE = '151F18'
@@ -35,7 +36,7 @@ let logoCache: Uint8Array | null = null
 async function chargerLogo(): Promise<Uint8Array | null> {
   if (logoCache) return logoCache
   try {
-    const res = await fetch('/logo.jpg')
+    const res = await fetch(assetUrl('logo.jpg'))
     if (!res.ok) return null
     logoCache = new Uint8Array(await res.arrayBuffer())
     return logoCache

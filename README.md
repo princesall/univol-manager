@@ -37,6 +37,51 @@ Génère un installateur dans le dossier `release/` (`.exe` sous Windows,
 sur laquelle la commande est lancée). C'est ce fichier qu'on donne au
 patron et aux collaborateurs pour une installation classique sur leur PC.
 
+#### Mises à jour automatiques (electron-updater)
+L'app desktop vérifie les **GitHub Releases** du dépôt
+`princesall/univol-manager` au démarrage (et toutes les 4 h). Si une
+version plus récente est publiée, elle est téléchargée en arrière-plan
+et un bandeau propose de redémarrer pour l'installer.
+
+**Prérequis** : le dépôt doit être **public** (déjà le cas) pour que les
+clients téléchargent les updates sans token.
+
+##### Option A — Publication locale (Windows)
+1. Bumper la version dans `package.json` (ex. `0.1.0` → `0.1.1`)
+2. Créer un **Personal Access Token** GitHub (classic) avec le scope `repo`,
+   ou un fine-grained token avec permission **Contents: Read and write**
+   sur ce dépôt
+3. Exporter le token puis publier :
+```powershell
+# PowerShell — ne jamais committer ce token
+$env:GH_TOKEN = "ghp_xxxxxxxx"
+# Optionnel : injecter Supabase / PIN au build
+# $env:VITE_SUPABASE_URL = "..."
+# $env:VITE_SUPABASE_ANON_KEY = "..."
+npm run electron:publish
+```
+Cela build l'installateur **et** crée/met à jour la GitHub Release
+(`latest.yml` + `UniVol-Manager-Setup-x.y.z.exe` + `.blockmap`).
+
+##### Option B — Publication via GitHub Actions (recommandé)
+1. Bumper la version dans `package.json`
+2. Commit + push sur `main`
+3. Créer et pousser un tag qui correspond à la version :
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+Le workflow `.github/workflows/release-electron.yml` build sur un runner
+Windows et publie la Release automatiquement (utilise `GITHUB_TOKEN`).
+
+Si l'app desktop doit être livrée avec Supabase déjà configuré, ajoutez
+les secrets de dépôt : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+et éventuellement `VITE_PIN_ADMIN`, `VITE_PIN_COMMERCIAL`,
+`VITE_PIN_TECHNIQUE`, `VITE_PIN_OBSERVATEUR`.
+
+Les PC déjà installés se mettront à jour au prochain lancement (ou dans
+les 4 h suivantes).
+
 Pour tester la version Electron en développement (nécessite `npm run dev`
 lancé dans un autre terminal) :
 ```bash
@@ -50,17 +95,19 @@ locaux chargés par Electron) sans configuration serveur particulière.
 
 ## Comptes utilisateurs
 
-L'application utilise un système d'authentification par mot de passe simple.
-Chaque rôle a un mot de passe prédéfini à 4 chiffres :
+L'application utilise une authentification par code PIN par rôle.
+Les codes sont configurés via les variables d'environnement `VITE_PIN_*`
+(fichier `.env` local ou secrets de déploiement) — **ils ne sont jamais
+documentés ni commités dans ce dépôt**.
 
-| Rôle | Mot de passe | Accès |
-|---|---|---|
-| 👑 Administrateur | `7643` | Tous les modules |
-| 💼 Gestionnaire Commercial | `7494` | Achats, Dépenses, Ventes, Stocks, Clients, Fournisseurs |
-| 🐣 Gestionnaire Technique | `7009` | Couvoir, Poulailler, Bétail, Stocks |
-| 👀 Observateur | `7959` | Tableau de bord, Rapports (lecture seule) |
+| Rôle | Accès |
+|---|---|
+| 👑 Administrateur | Tous les modules |
+| 💼 Gestionnaire Commercial | Achats, Dépenses, Ventes, Stocks, Clients, Fournisseurs |
+| 🐣 Gestionnaire Technique | Couvoir, Poulailler, Bétail, Stocks |
+| 👀 Observateur | Tableau de bord, Rapports (lecture seule) |
 
-Pour vous connecter, entrez simplement le mot de passe correspondant à votre rôle sur la page de connexion.
+Demandez les codes PIN à l'administrateur de l'entreprise pour vous connecter.
 
 ## Modules — 11 modules métier (les 10 du cahier des charges + Bétail)
 

@@ -1,0 +1,63 @@
+# Publie l'installateur Windows + métadonnées electron-updater
+# (latest.yml, .exe, .blockmap) en GitHub Release.
+#
+# Déclenchement : push d'un tag vX.Y.Z (ex. v0.1.1)
+# Prérequis : la version dans package.json doit correspondre au tag
+# (v0.1.1 → "version": "0.1.0" est rejeté ; utiliser 0.1.1).
+
+name: Release Electron
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package.json version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v') {
+            Write-Error "Tag invalide: $tag (attendu vX.Y.Z)"
+            exit 1
+          }
+          $expected = $tag.Substring(1)
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          if ($pkg.version -ne $expected) {
+            Write-Error "Version package.json ($($pkg.version)) != tag ($expected). Bumper package.json avant de tagger."
+            exit 1
+          }
+          Write-Host "OK: version $($pkg.version) correspond au tag $tag"
+
+      - name: Build & publish to GitHub Releases
+        env:
+          # Token fourni par Actions — permission contents:write ci-dessus
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optionnels : secrets de dépôt pour embarquer la config cloud au build
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
+          VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
+          VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
+          VITE_PIN_OBSERVATEUR: ${{ secrets.VITE_PIN_OBSERVATEUR }}
+        run: npm run electron:publish

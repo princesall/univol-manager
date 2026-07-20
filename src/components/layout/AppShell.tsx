@@ -20,8 +20,10 @@ import {
 import clsx from 'clsx'
 import { useAuth, ROLE_LABELS, ROLE_MODULE_ACCESS } from '@/store/auth'
 import { SyncIndicator } from '@/components/layout/SyncIndicator'
+import { UpdateBanner } from '@/components/layout/UpdateBanner'
 import { startAutoSync, stopAutoSync } from '@/lib/sync'
 import { getSupabaseClient } from '@/lib/supabase'
+import { assetUrl } from '@/lib/assets'
 
 const NAV_ITEMS = [
   { key: 'dashboard', to: '/', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -63,7 +65,7 @@ export function AppShell() {
   const sidebarContent = (
     <>
       <div className="flex items-center gap-2.5 px-5 py-6">
-        <img src="/logo.jpg" alt="UniVol Mali" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+        <img src={assetUrl('logo.jpg')} alt="UniVol Mali" className="h-11 w-11 shrink-0 rounded-full object-cover" />
         <div>
           <p className="font-display text-base font-semibold leading-tight">UniVol</p>
           <p className="text-[11px] uppercase tracking-wider text-parchment-100/50">Manager</p>
@@ -140,6 +142,7 @@ export function AppShell() {
 
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <UpdateBanner />
         <header className="flex items-center justify-between gap-3 border-b border-ink-900/8 bg-parchment-50/80 px-4 py-3.5 backdrop-blur sm:px-6 lg:px-8 lg:py-4">
           <div className="flex min-w-0 items-center gap-3">
             <button

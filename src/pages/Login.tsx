@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Lock, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
+import { assetUrl } from '@/lib/assets'
 
 export function Login() {
   const [motDePasse, setMotDePasse] = useState('')
@@ -27,7 +28,7 @@ export function Login() {
           }}
         />
         <div className="relative flex items-center gap-2.5">
-          <img src="/logo.jpg" alt="UniVol Mali" className="h-12 w-12 rounded-full object-cover" />
+          <img src={assetUrl('logo.jpg')} alt="UniVol Mali" className="h-12 w-12 rounded-full object-cover" />
           <p className="font-display text-lg font-semibold text-parchment-50">UniVol Manager</p>
         </div>
 
@@ -51,7 +52,7 @@ export function Login() {
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <div className="mb-3 inline-flex items-center gap-2">
-              <img src="/logo.jpg" alt="UniVol Mali" className="h-9 w-9 rounded-full object-cover" />
+              <img src={assetUrl('logo.jpg')} alt="UniVol Mali" className="h-9 w-9 rounded-full object-cover" />
               <p className="font-display text-lg font-semibold">UniVol Manager</p>
             </div>
           </div>
