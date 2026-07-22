@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Plus, Beef, Calendar, Skull, Syringe, Trash2, PackageCheck } from 'lucide-react'
+import { Plus, Beef, Calendar, Skull, Syringe, Trash2, PackageCheck, Pencil } from 'lucide-react'
 import { db, genId, genReference, logActivity, ensureClientExists, vendreDepuisLotBetail, filterActive } from '@/lib/db'
 import { markForDelete } from '@/lib/sync'
 import type { CategorieBetail, LotBetail, SourceAcquisitionBetail, TypeSoin, Vente, SoinSanteBetail } from '@/types'
@@ -28,7 +28,7 @@ export function Betail() {
   const { user } = useAuth()
   const lots = useLiveQuery(() => db.lotsBetail.orderBy('dateAcquisition').reverse().toArray().then(filterActive), [])
   const [recherche, setRecherche] = useState('')
-  const [openNouveau, setOpenNouveau] = useState(false)
+  const [modal, setModal] = useState<{ mode: 'creer' } | { mode: 'modifier'; lot: LotBetail } | null>(null)
   const [lotMortalite, setLotMortalite] = useState<LotBetail | null>(null)
   const [lotSante, setLotSante] = useState<LotBetail | null>(null)
   const [lotEcouler, setLotEcouler] = useState<LotBetail | null>(null)
@@ -63,7 +63,7 @@ export function Betail() {
           </p>
         </div>
         {peutModifier && (
-          <Button onClick={() => setOpenNouveau(true)}>
+          <Button onClick={() => setModal({ mode: 'creer' })}>
             <Plus size={16} /> Nouveau lot
           </Button>
         )}
@@ -82,7 +82,7 @@ export function Betail() {
           description="Ajoute tes chèvres, moutons ou bœufs pour suivre leurs effectifs, leur santé et leurs ventes."
           action={
             peutModifier && (
-              <Button size="sm" onClick={() => setOpenNouveau(true)}>
+              <Button size="sm" onClick={() => setModal({ mode: 'creer' })}>
                 <Plus size={14} /> Créer un lot
               </Button>
             )
@@ -110,6 +110,8 @@ export function Betail() {
                     onMortalite={() => setLotMortalite(l)}
                     onSante={() => setLotSante(l)}
                     onEcouler={() => setLotEcouler(l)}
+                    onModifier={() => setModal({ mode: 'modifier', lot: l })}
+                    onSupprimer={() => setLotASupprimer(l)}
                   />
                 ))}
               </div>
@@ -148,9 +150,14 @@ export function Betail() {
                         <td className="px-5 py-3.5 text-ink-700">{format(new Date(l.dateAcquisition), 'd MMM yyyy', { locale: fr })}</td>
                         {peutModifier && (
                           <td className="px-5 py-3.5 text-right">
-                            <Button size="sm" variant="ghost" onClick={() => setLotASupprimer(l)} title="Supprimer">
-                              <Trash2 size={13} className="text-signal-red" />
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => setModal({ mode: 'modifier', lot: l })} title="Modifier">
+                                <Pencil size={13} />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setLotASupprimer(l)} title="Supprimer">
+                                <Trash2 size={13} className="text-signal-red" />
+                              </Button>
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -163,7 +170,12 @@ export function Betail() {
         </>
       )}
 
-      <NouveauLotBetailModal open={openNouveau} onClose={() => setOpenNouveau(false)} utilisateurNom={user?.nom ?? ''} />
+      <LotBetailFormModal
+        open={!!modal}
+        lotExistant={modal?.mode === 'modifier' ? modal.lot : null}
+        onClose={() => setModal(null)}
+        utilisateurNom={user?.nom ?? ''}
+      />
       <MortaliteBetailModal lot={lotMortalite} onClose={() => setLotMortalite(null)} utilisateurNom={user?.nom ?? ''} />
       <SanteBetailModal lot={lotSante} onClose={() => setLotSante(null)} utilisateurNom={user?.nom ?? ''} />
       <EcoulerLotBetailModal
@@ -198,18 +210,22 @@ function LotBetailCard({
   onMortalite,
   onSante,
   onEcouler,
+  onModifier,
+  onSupprimer,
 }: {
   lot: LotBetail
   peutModifier: boolean
   onMortalite: () => void
   onSante: () => void
   onEcouler: () => void
+  onModifier: () => void
+  onSupprimer: () => void
 }) {
   const ageJours = differenceInCalendarDays(new Date(), new Date(lot.dateAcquisition))
   const mortalitesLot = useLiveQuery(() => db.mortalitesBetail.where('lotBetailId').equals(lot.id).toArray().then(filterActive), [lot.id])
   const soins = useLiveQuery(() => db.soinsSanteBetail.where('lotBetailId').equals(lot.id).count(), [lot.id])
   const pertes = (mortalitesLot ?? []).reduce((s, m) => s + m.quantite, 0)
-  const tauxPerte = Math.round((pertes / lot.effectifInitial) * 100)
+  const tauxPerte = lot.effectifInitial > 0 ? Math.round((pertes / lot.effectifInitial) * 100) : 0
 
   return (
     <Card className="p-5">
@@ -218,10 +234,34 @@ function LotBetailCard({
           <Beef size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-mono-data text-xs font-medium text-ink-700/70">{lot.reference}</p>
-          <div className="mt-0.5 flex items-center gap-1.5">
-            <p className="font-display text-base font-semibold text-ink-950">{lot.effectifActuel.toLocaleString('fr-FR')} têtes</p>
-            <Badge tone="neutral">{LABEL_CATEGORIE[lot.categorie]}</Badge>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-mono-data text-xs font-medium text-ink-700/70">{lot.reference}</p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <p className="font-display text-base font-semibold text-ink-950">{lot.effectifActuel.toLocaleString('fr-FR')} têtes</p>
+                <Badge tone="neutral">{LABEL_CATEGORIE[lot.categorie]}</Badge>
+              </div>
+            </div>
+            {peutModifier && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={onModifier}
+                  className="shrink-0 rounded-md p-1 text-ink-700/40 hover:bg-ink-900/5 hover:text-ink-700"
+                  title="Modifier"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onSupprimer}
+                  className="shrink-0 rounded-md p-1 text-signal-red/40 hover:bg-signal-red/8 hover:text-signal-red"
+                  title="Supprimer"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            )}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700/70">
             <span className="flex items-center gap-1">
@@ -254,12 +294,14 @@ function LotBetailCard({
   )
 }
 
-function NouveauLotBetailModal({
+function LotBetailFormModal({
   open,
+  lotExistant,
   onClose,
   utilisateurNom,
 }: {
   open: boolean
+  lotExistant: LotBetail | null
   onClose: () => void
   utilisateurNom: string
 }) {
@@ -268,18 +310,59 @@ function NouveauLotBetailModal({
   const [source, setSource] = useState<SourceAcquisitionBetail>('achat')
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [notes, setNotes] = useState('')
+  const [cle, setCle] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(false)
+
+  const estModification = !!lotExistant
+
+  if (open && lotExistant && cle !== lotExistant.id) {
+    setCle(lotExistant.id)
+    setCategorie(lotExistant.categorie)
+    setEffectif(String(lotExistant.effectifInitial))
+    setSource(lotExistant.sourceAcquisition)
+    setDate(format(new Date(lotExistant.dateAcquisition), 'yyyy-MM-dd'))
+    setNotes(lotExistant.notes ?? '')
+  }
+  if (open && !lotExistant && cle !== 'nouveau') {
+    setCle('nouveau')
+    setCategorie('chevre')
+    setEffectif('')
+    setSource('achat')
+    setDate(format(new Date(), 'yyyy-MM-dd'))
+    setNotes('')
+  }
 
   async function submit() {
     if (!effectif || envoi) return
     setEnvoi(true)
     const maintenant = new Date().toISOString()
+    const effectifNum = Number(effectif)
+
+    if (estModification && lotExistant) {
+      const delta = effectifNum - lotExistant.effectifInitial
+      const effectifActuel = Math.max(0, lotExistant.effectifActuel + delta)
+      await db.lotsBetail.update(lotExistant.id, {
+        categorie,
+        effectifInitial: effectifNum,
+        effectifActuel,
+        dateAcquisition: new Date(date).toISOString(),
+        sourceAcquisition: source,
+        notes: notes || undefined,
+        modifieLe: maintenant,
+        syncStatus: 'en_attente',
+      })
+      await logActivity(utilisateurNom, 'Modification du lot de bétail', lotExistant.reference)
+      setEnvoi(false)
+      onClose()
+      return
+    }
+
     await db.lotsBetail.add({
       id: genId('bet'),
       reference: genReference('BET'),
       categorie,
-      effectifInitial: Number(effectif),
-      effectifActuel: Number(effectif),
+      effectifInitial: effectifNum,
+      effectifActuel: effectifNum,
       dateAcquisition: new Date(date).toISOString(),
       sourceAcquisition: source,
       statut: 'en_elevage',
@@ -297,7 +380,7 @@ function NouveauLotBetailModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nouveau lot de bétail">
+    <Modal open={open} onClose={onClose} title={estModification ? `Modifier le lot — ${lotExistant?.reference}` : 'Nouveau lot de bétail'}>
       <div className="space-y-4">
         <FormField label="Catégorie">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -316,13 +399,19 @@ function NouveauLotBetailModal({
           </div>
         </FormField>
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="Effectif">
+          <FormField label="Effectif initial">
             <input type="number" min={1} className={inputClass} placeholder="10" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
           </FormField>
           <FormField label="Date d'acquisition">
             <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
           </FormField>
         </div>
+        {estModification && lotExistant && (
+          <p className="rounded-lg bg-ink-900/[0.03] px-3.5 py-2.5 text-xs text-ink-700">
+            Effectif actuel : {lotExistant.effectifActuel.toLocaleString('fr-FR')} têtes. Si vous changez l’effectif initial,
+            l’effectif actuel sera ajusté automatiquement.
+          </p>
+        )}
         <FormField label="Origine">
           <div className="grid grid-cols-2 gap-2">
             {(['achat', 'naissance'] as const).map((s) => (
@@ -344,7 +433,9 @@ function NouveauLotBetailModal({
         </FormField>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Annuler</Button>
-          <Button onClick={submit} disabled={envoi}>{envoi ? 'Création…' : 'Créer le lot'}</Button>
+          <Button onClick={submit} disabled={envoi}>
+            {envoi ? (estModification ? 'Enregistrement…' : 'Création…') : estModification ? 'Enregistrer' : 'Créer le lot'}
+          </Button>
         </div>
       </div>
     </Modal>
