@@ -1,4 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { APP_LOCKED } from '@/config/access'
+import { Locked } from '@/pages/Locked'
 import { Login } from '@/pages/Login'
 import { Dashboard } from '@/pages/Dashboard'
 import { Couvoir } from '@/pages/Couvoir'
@@ -16,6 +18,8 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute, ModuleRoute } from '@/components/layout/ProtectedRoute'
 
 export default function App() {
+  if (APP_LOCKED) return <Locked />
+
   return (
     <HashRouter>
       <Routes>

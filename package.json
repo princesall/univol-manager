@@ -1,7 +1,7 @@
 {
   "name": "univol-manager",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Application de gestion de couvoir et poulailler UniVol Mali",
   "author": "UniVol Mali",
   "type": "module",
