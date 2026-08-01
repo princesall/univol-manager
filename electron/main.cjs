@@ -125,6 +125,12 @@ function setupAutoUpdater() {
       version: info.version,
       releaseDate: info.releaseDate,
     })
+
+    // Redémarrage + installation automatiques, sans action de l'utilisateur.
+    // Petit délai pour laisser le bandeau s'afficher avant la fermeture.
+    setTimeout(() => {
+      autoUpdater.quitAndInstall(true, true)
+    }, 5000)
   })
 
   autoUpdater.on('error', (err) => {

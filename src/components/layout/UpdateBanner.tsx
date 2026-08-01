@@ -133,7 +133,7 @@ export function UpdateBanner() {
                   <span className="font-semibold">v{info.version}</span>
                 </>
               ) : null}{' '}
-              prête. Redémarrez l&apos;application pour l&apos;installer.
+              prête. Redémarrage automatique dans quelques secondes…
             </p>
           )}
 
