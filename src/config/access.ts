@@ -2,7 +2,7 @@
  * Verrou d'accès à l'application.
  * Passer APP_LOCKED à false et republier une mise à jour pour redonner l'accès.
  */
-export const APP_LOCKED = true
+export const APP_LOCKED = false
 
 export const LOCK_MESSAGE = {
   titre: 'Accès temporairement suspendu',
