@@ -1,7 +1,7 @@
 {
   "name": "univol-manager",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Application de gestion de couvoir et poulailler UniVol Mali",
   "author": "UniVol Mali",
   "type": "module",
@@ -16,7 +16,9 @@
     "preview": "vite preview",
     "electron:dev": "electron .",
     "electron:build": "npm run build && electron-builder --win nsis --publish never",
-    "electron:publish": "npm run build && electron-builder --win nsis --publish always"
+    "electron:publish": "npm run build && electron-builder --win nsis --publish always",
+    "electron:build:mac": "npm run build && electron-builder --mac dmg --publish never",
+    "electron:publish:mac": "npm run build && electron-builder --mac dmg --publish always"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",
@@ -78,8 +80,22 @@
       "icon": "public/icon-512.png"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "public/icon-512.png"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "public/icon-512.png",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "sign": false
     },
     "linux": {
       "target": "AppImage",

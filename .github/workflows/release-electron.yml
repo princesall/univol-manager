@@ -1,9 +1,14 @@
-# Publie l'installateur Windows + métadonnées electron-updater
-# (latest.yml, .exe, .blockmap) en GitHub Release.
+# Publie les installateurs Windows (.exe) et macOS (.dmg) + métadonnées
+# electron-updater en GitHub Release.
 #
 # Déclenchement : push d'un tag vX.Y.Z (ex. v0.1.1)
 # Prérequis : la version dans package.json doit correspondre au tag
 # (v0.1.1 → "version": "0.1.0" est rejeté ; utiliser 0.1.1).
+#
+# Le build macOS n'est PAS signé (pas de compte Apple Developer) :
+# à la première ouverture, macOS affichera un avertissement "développeur
+# non identifié". L'utilisateur doit faire un clic droit > Ouvrir sur
+# l'app (une seule fois).
 
 name: Release Electron
 
@@ -61,3 +66,46 @@ jobs:
           VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
           VITE_PIN_OBSERVATEUR: ${{ secrets.VITE_PIN_OBSERVATEUR }}
         run: npm run electron:publish
+
+  release-mac:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package.json version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^v ]]; then
+            echo "Tag invalide: $tag (attendu vX.Y.Z)" >&2
+            exit 1
+          fi
+          expected="${tag#v}"
+          actual=$(node -p "require('./package.json').version")
+          if [ "$actual" != "$expected" ]; then
+            echo "Version package.json ($actual) != tag ($expected). Bumper package.json avant de tagger." >&2
+            exit 1
+          fi
+          echo "OK: version $actual correspond au tag $tag"
+
+      - name: Build & publish to GitHub Releases (macOS, non signé)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
+          VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
+          VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
+          VITE_PIN_OBSERVATEUR: ${{ secrets.VITE_PIN_OBSERVATEUR }}
+        run: npm run electron:publish:mac
