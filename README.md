@@ -386,9 +386,8 @@ L'application peut être déployée sur Vercel pour un accès web en production.
    - **Build Command** : `npm run build`
    - **Output Directory** : `dist`
    - **Install Command** : `npm install`
-5. Ajoutez les variables d'environnement :
-   - `VITE_SUPABASE_URL` : votre URL Supabase
-   - `VITE_SUPABASE_ANON_KEY` : votre clé anon Supabase
+5. Aucune variable d'environnement n'est nécessaire : l'adresse du serveur
+   est intégrée au code (voir §5)
 6. Cliquez sur "Deploy"
 
 ### 3. Méthode 2 : Déploiement via Vercel CLI
@@ -415,13 +414,19 @@ Le fichier `vercel.json` est déjà configuré pour :
 
 ### 5. Variables d'environnement sur Vercel
 
-Après le déploiement, ajoutez les variables d'environnement dans Vercel :
+**Rien à configurer.** L'adresse du serveur est intégrée au code
+(`src/config/api.ts`). Le déploiement fonctionne dès l'import du dépôt.
 
-1. Allez dans Settings → Environment Variables
-2. Ajoutez :
-   - `VITE_SUPABASE_URL` = `https://vvoyjsukzqknlxltjwei.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2b3lqc3VrenFrbmx4bHRqd2VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTUwMjUsImV4cCI6MjA5OTc3MTAyNX0.beW3kpoSmQXB9DxxrxsVz8EvEB6RRpQJir15jSKpzz8`
-3. Redéployez le projet pour appliquer les changements
+Si besoin de pointer vers un autre serveur (recette, développement), ajoutez
+dans Vercel → Settings → Environment Variables :
+
+- `VITE_API_URL` = `https://13.140.187.105` (l'adresse de votre VPS)
+
+puis redéployez.
+
+> **Prérequis serveur** : l'origine de votre site Vercel
+> (`https://<votre-projet>.vercel.app`) doit figurer dans `CORS_ORIGINS` sur le
+> serveur, sinon le navigateur bloquera les appels à l'API.
 
 ### 6. Domaine personnalisé (optionnel)
 
