@@ -9,12 +9,12 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 
 export function Login() {
   const [motDePasse, setMotDePasse] = useState('')
-  const { connecter, erreur } = useAuth()
+  const { connecter, erreur, chargement } = useAuth()
   const navigate = useNavigate()
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (connecter(motDePasse)) navigate('/')
+    if (await connecter(motDePasse)) navigate('/')
   }
 
   return (
@@ -102,8 +102,8 @@ export function Login() {
               </p>
             )}
 
-            <Button type="submit" className="w-full">
-              Se connecter <ArrowRight size={15} />
+            <Button type="submit" className="w-full" disabled={chargement}>
+              {chargement ? 'Connexion…' : 'Se connecter'} <ArrowRight size={15} />
             </Button>
           </form>
         </div>

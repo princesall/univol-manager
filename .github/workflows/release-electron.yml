@@ -58,9 +58,13 @@ jobs:
         env:
           # Token fourni par Actions — permission contents:write ci-dessus
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Optionnels : secrets de dépôt pour embarquer la config cloud au build
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Adresse du backend UniVol, INJECTÉE DANS L'INSTALLEUR au build.
+          # Vite remplace cette valeur dans le code compilé : sans elle,
+          # l'application installée resterait en mode hors ligne et
+          # n'enverrait rien au serveur.
+          # Le secret de dépôt est prioritaire ; à défaut, l'adresse par
+          # défaut du serveur est utilisée (ce n'est pas une valeur secrète).
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://13.140.187.105' }}
           VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
           VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
           VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
@@ -102,8 +106,9 @@ jobs:
       - name: Build & publish to GitHub Releases (macOS, non signé)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Voir le commentaire du job Windows : sans cette variable,
+          # l'application macOS installée serait aussi en mode hors ligne.
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://13.140.187.105' }}
           VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
           VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
           VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}

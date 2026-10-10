@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import { ensureSeeded } from '@/lib/seed'
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary'
+// Enregistre window.univolExport / window.univolImport (sauvegarde locale).
+import '@/lib/backup'
 import './styles/global.css'
 
 function Root() {

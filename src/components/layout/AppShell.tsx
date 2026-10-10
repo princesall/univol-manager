@@ -16,13 +16,17 @@ import {
   LogOut,
   Menu,
   X,
+  HardDriveDownload,
+  CloudUpload,
+  AlertTriangle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth, ROLE_LABELS, ROLE_MODULE_ACCESS } from '@/store/auth'
 import { SyncIndicator } from '@/components/layout/SyncIndicator'
 import { UpdateBanner } from '@/components/layout/UpdateBanner'
-import { startAutoSync, stopAutoSync } from '@/lib/sync'
-import { getSupabaseClient } from '@/lib/supabase'
+import { ConflitsSync } from '@/components/layout/ConflitsSync'
+import { startAutoSync, stopAutoSync, migrationInitiale, surConflits, type Conflit } from '@/lib/sync'
+import { exporterDonneesLocales } from '@/lib/backup'
 import { assetUrl } from '@/lib/assets'
 
 const NAV_ITEMS = [
@@ -46,15 +50,74 @@ export function AppShell() {
   const location = useLocation()
   const [menuOuvert, setMenuOuvert] = useState(false)
 
-  // Synchronisation automatique uniquement si Supabase est configuré et sync activée
+  // Synchronisation automatique vers le backend UniVol, quand elle est activée
   useEffect(() => {
-    if (!syncEnabled || !getSupabaseClient()) {
+    if (!syncEnabled) {
       stopAutoSync()
       return
     }
-    startAutoSync(60000)
+    startAutoSync(60_000)
     return () => stopAutoSync()
   }, [syncEnabled])
+
+  // -------------------------------------------------------------------
+  // Sauvegarde et envoi des données, accessibles par bouton : aucune
+  // manipulation de console n'est nécessaire.
+  // -------------------------------------------------------------------
+  const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false)
+  const [envoiEnCours, setEnvoiEnCours] = useState(false)
+  const [messageDonnees, setMessageDonnees] = useState<string | null>(null)
+  const [conflits, setConflits] = useState<Conflit[]>([])
+  const [conflitsOuverts, setConflitsOuverts] = useState(false)
+
+  // Les conflits sont publiés à la fin de chaque cycle de synchronisation.
+  useEffect(() => surConflits(setConflits), [])
+
+  async function handleSauvegarder() {
+    setSauvegardeEnCours(true)
+    setMessageDonnees(null)
+    try {
+      const resultat = await exporterDonneesLocales()
+      setMessageDonnees(
+        `Sauvegarde créée : ${resultat.total} enregistrements (${resultat.fichier}). ` +
+          'Copiez ce fichier sur une clé USB.',
+      )
+    } catch (erreur) {
+      setMessageDonnees(
+        `Échec de la sauvegarde : ${erreur instanceof Error ? erreur.message : String(erreur)}`,
+      )
+    } finally {
+      setSauvegardeEnCours(false)
+    }
+  }
+
+  async function handleEnvoyer() {
+    const confirme = window.confirm(
+      'Envoyer TOUTES les données locales vers le serveur ?\n\n' +
+        'Cette opération crée ou met à jour les enregistrements sur le VPS. ' +
+        'Vos données locales ne sont pas supprimées, mais assurez-vous d’avoir ' +
+        'fait une sauvegarde avant de continuer.',
+    )
+    if (!confirme) return
+
+    setEnvoiEnCours(true)
+    setMessageDonnees(null)
+    try {
+      const resultat = await migrationInitiale()
+      setMessageDonnees(
+        resultat.errors.length > 0
+          ? `Envoi terminé : ${resultat.uploaded} transmis, ${resultat.errors.length} erreur(s). ` +
+            `Par table — ${resultat.resume}. Causes — ${resultat.causes}`
+          : `Envoi réussi : ${resultat.uploaded} enregistrement(s) transmis au serveur.`,
+      )
+    } catch (erreur) {
+      setMessageDonnees(
+        `Échec de l'envoi : ${erreur instanceof Error ? erreur.message : String(erreur)}`,
+      )
+    } finally {
+      setEnvoiEnCours(false)
+    }
+  }
 
   if (!user) return null
 
@@ -100,6 +163,60 @@ export function AppShell() {
         ))}
       </nav>
 
+      {/* Sauvegarde et envoi des données — accessibles par simple clic */}
+      <div className="space-y-0.5 border-t border-parchment-100/10 px-3 py-3">
+        <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-parchment-100/40">
+          Données locales
+        </p>
+
+        <button
+          onClick={handleSauvegarder}
+          disabled={sauvegardeEnCours}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs font-medium text-parchment-100/70 transition-colors hover:bg-parchment-100/5 hover:text-parchment-100 disabled:opacity-40"
+          title="Télécharge un fichier contenant toutes vos données locales"
+        >
+          <HardDriveDownload size={15} className="shrink-0" />
+          <span className="min-w-0 flex-1">
+            {sauvegardeEnCours ? 'Sauvegarde en cours…' : 'Sauvegarder sur ce PC'}
+          </span>
+        </button>
+
+        <button
+          onClick={handleEnvoyer}
+          disabled={envoiEnCours || !syncEnabled}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs font-medium text-parchment-100/70 transition-colors hover:bg-parchment-100/5 hover:text-parchment-100 disabled:opacity-40"
+          title={
+            syncEnabled
+              ? 'Envoie toutes les données locales vers votre serveur'
+              : 'Connectez-vous au serveur pour activer cette action'
+          }
+        >
+          <CloudUpload size={15} className="shrink-0" />
+          <span className="min-w-0 flex-1">
+            {envoiEnCours ? 'Envoi en cours…' : 'Envoyer vers le serveur'}
+          </span>
+        </button>
+
+        {conflits.length > 0 && (
+          <button
+            onClick={() => setConflitsOuverts(true)}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs font-medium text-yolk-400 transition-colors hover:bg-yolk-500/10"
+            title="Voir les enregistrements refusés par le serveur"
+          >
+            <AlertTriangle size={15} className="shrink-0" />
+            <span className="min-w-0 flex-1">
+              Voir les {conflits.length} conflit{conflits.length > 1 ? 's' : ''}
+            </span>
+          </button>
+        )}
+
+        {messageDonnees && (
+          <p className="max-h-28 overflow-y-auto px-2 pt-1.5 text-[10px] leading-relaxed break-words text-parchment-100/55">
+            {messageDonnees}
+          </p>
+        )}
+      </div>
+
       <div className="border-t border-parchment-100/10 p-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yolk-500 text-xs font-semibold text-ink-950">
@@ -126,6 +243,8 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen bg-parchment-50">
+      <ConflitsSync open={conflitsOuverts} onClose={() => setConflitsOuverts(false)} />
+
       {/* Sidebar — fixe sur desktop, tiroir sur mobile/tablette */}
       <aside className="hidden w-64 shrink-0 flex-col bg-ink-950 text-parchment-100 lg:flex">
         {sidebarContent}

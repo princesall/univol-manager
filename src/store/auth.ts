@@ -1,17 +1,35 @@
 import { create } from 'zustand'
 import type { AppUser, Role } from '@/types'
-import { getSupabaseClient } from '@/lib/supabase'
 import { startAutoSync, stopAutoSync } from '@/lib/sync'
+import { api, ApiAuthError, ApiOfflineError, hasToken, setToken } from '@/lib/api'
 
-// Mots de passe prédéfinis par rôle (chargeables depuis les variables d'environnement)
+// ---------------------------------------------------------------------
+// REPLI HORS LIGNE — À NE PAS CONFONDRE AVEC L'AUTHENTIFICATION.
+//
+// La source d'autorité est le serveur : POST /api/auth/login vérifie le
+// PIN contre les hachages argon2 de la table `roles_configuration` et
+// renvoie un jeton JWT portant le rôle.
+//
+// Les codes ci-dessous ne servent QUE si le serveur est injoignable,
+// afin que l'exploitation puisse continuer sans Internet — c'est la
+// raison d'être de l'architecture offline-first (Dexie).
+//
+// Faiblesse assumée : ces codes restent embarqués dans le binaire client
+// (Vite « inline » toute variable VITE_*). À corriger ensuite, en
+// mémorisant localement un hachage du PIN validé une première fois en
+// ligne, au lieu de comparer des secrets en clair.
+//
+// Note : les anciennes valeurs codées en dur ('7643', '7494', …) ont été
+// retirées — elles étaient présentes dans l'historique Git.
+// ---------------------------------------------------------------------
 const MOTS_DE_PASSE: Record<Role, string> = {
-  admin: import.meta.env.VITE_PIN_ADMIN || '7643',
-  commercial: import.meta.env.VITE_PIN_COMMERCIAL || '7494',
-  technique: import.meta.env.VITE_PIN_TECHNIQUE || '7009',
-  observateur: import.meta.env.VITE_PIN_OBSERVATEUR || '7959',
+  admin: import.meta.env.VITE_PIN_ADMIN || '',
+  commercial: import.meta.env.VITE_PIN_COMMERCIAL || '',
+  technique: import.meta.env.VITE_PIN_TECHNIQUE || '',
+  observateur: import.meta.env.VITE_PIN_OBSERVATEUR || '',
 }
 
-// Utilisateurs prédéfinis
+// Utilisateurs prédéfinis (identité affichée ; le rôle fait foi côté serveur)
 const UTILISATEURS: Record<Role, AppUser> = {
   admin: {
     id: 'u_admin',
@@ -43,51 +61,135 @@ const UTILISATEURS: Record<Role, AppUser> = {
   },
 }
 
+function estRoleConnue(valeur: unknown): valeur is Role {
+  return (
+    valeur === 'admin' ||
+    valeur === 'commercial' ||
+    valeur === 'technique' ||
+    valeur === 'observateur'
+  )
+}
+
+/** Cherche un rôle correspondant au code, dans la table de repli locale. */
+function roleDepuisCodeLocal(code: string): Role | null {
+  if (!code) return null
+  const trouve = Object.entries(MOTS_DE_PASSE).find(
+    ([, attendu]) => attendu.length > 0 && attendu === code,
+  )
+  return (trouve?.[0] as Role | undefined) ?? null
+}
+
 interface AuthState {
   user: AppUser | null
   erreur: string | null
-  connecter: (motDePasse: string) => boolean
+  /** Vrai pendant l'appel de connexion (permet de désactiver le bouton). */
+  chargement: boolean
+  /**
+   * Vrai quand la session a été ouverte en repli hors ligne parce que le
+   * serveur était injoignable. Les données saisies dans cet état ne sont
+   * pas encore validées par le serveur.
+   */
+  horsLigne: boolean
+  connecter: (motDePasse: string) => Promise<boolean>
   deconnecter: () => void
   syncEnabled: boolean
   toggleSync: () => void
 }
 
 const userInitial: AppUser | null = JSON.parse(sessionStorage.getItem('univol_user') || 'null')
-const supabaseDispo = () => getSupabaseClient() !== null
+
+/** Une session ouverte AVEC jeton serveur permet de synchroniser. */
+const synchronisationPossible = () => hasToken()
 
 export const useAuth = create<AuthState>((set) => ({
   user: userInitial,
   erreur: null,
-  // Restaurer la sync si l'utilisateur est déjà connecté et Supabase configuré
-  syncEnabled: Boolean(userInitial) && supabaseDispo(),
-  connecter: (motDePasse) => {
-    const role = Object.entries(MOTS_DE_PASSE).find(([_, mdp]) => mdp === motDePasse)?.[0] as Role
+  chargement: false,
+  horsLigne: false,
+  // Reprise automatique de la synchronisation si un jeton valide est déjà
+  // en session (l'utilisateur était connecté au serveur).
+  syncEnabled: synchronisationPossible(),
+
+  connecter: async (motDePasse) => {
+    set({ erreur: null, chargement: true })
+
+    // -----------------------------------------------------------------
+    // 1) Le serveur fait autorité.
+    // -----------------------------------------------------------------
+    try {
+      const { role, token } = await api.login(motDePasse)
+
+      // Refus explicite : ne jamais faire confiance à un rôle inattendu
+      // (un défaut silencieux vers 'admin' ouvrirait une élévation de privilèges).
+      if (!estRoleConnue(role)) {
+        set({
+          erreur: 'Rôle inconnu renvoyé par le serveur.',
+          chargement: false,
+        })
+        return false
+      }
+
+      setToken(token)
+      const user = UTILISATEURS[role]
+      sessionStorage.setItem('univol_user', JSON.stringify(user))
+      set({ user, erreur: null, chargement: false, horsLigne: false })
+
+      // Synchronisation automatique vers le backend UniVol (toutes les 60 s).
+      startAutoSync(60_000)
+      set({ syncEnabled: true })
+
+      return true
+    } catch (error) {
+      // Le serveur a répondu et a refusé → aucun repli local.
+      if (!(error instanceof ApiOfflineError)) {
+        const message =
+          error instanceof ApiAuthError
+            ? 'Mot de passe incorrect.'
+            : error instanceof Error
+              ? error.message
+              : 'Connexion impossible.'
+        set({ erreur: message, chargement: false })
+        return false
+      }
+      // ApiOfflineError : serveur injoignable → on passe au repli local.
+    }
+
+    // -----------------------------------------------------------------
+    // 2) Repli hors ligne : le serveur est injoignable.
+    // -----------------------------------------------------------------
+    const role = roleDepuisCodeLocal(motDePasse)
+
     if (!role) {
-      set({ erreur: 'Mot de passe incorrect.' })
+      set({ erreur: 'Mot de passe incorrect.', chargement: false })
       return false
     }
+
     const user = UTILISATEURS[role]
     sessionStorage.setItem('univol_user', JSON.stringify(user))
-    set({ user, erreur: null })
-
-    // Démarrer la synchronisation si Supabase est configuré
-    const supabase = getSupabaseClient()
-    if (supabase) {
-      startAutoSync(60000) // Synchronisation toutes les 60 secondes
-      set({ syncEnabled: true })
-    }
-
+    set({
+      user,
+      erreur: null,
+      chargement: false,
+      horsLigne: true,
+      syncEnabled: false,
+    })
     return true
   },
+
   deconnecter: () => {
     stopAutoSync()
+    setToken(null)
     sessionStorage.removeItem('univol_user')
-    set({ user: null, syncEnabled: false })
+    set({ user: null, syncEnabled: false, horsLigne: false, erreur: null })
   },
+
   toggleSync: () => {
-    const supabase = getSupabaseClient()
-    if (!supabase) {
-      set({ erreur: 'Supabase n\'est pas configuré' })
+    // Sans jeton serveur (session ouverte en repli hors ligne), il n'y a
+    // rien à synchroniser : il faut d'abord se reconnecter avec le serveur.
+    if (!synchronisationPossible()) {
+      set({
+        erreur: 'Serveur non connecté — reconnectez-vous avec votre PIN pour synchroniser.',
+      })
       return
     }
     set((state) => {

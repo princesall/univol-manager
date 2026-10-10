@@ -3,7 +3,7 @@ import { Cloud, CloudOff, RefreshCw, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/store/auth'
 import { manualSync } from '@/lib/sync'
-import { getSupabaseClient } from '@/lib/supabase'
+import { apiConfig } from '@/config/api'
 
 export function SyncIndicator() {
   const [online, setOnline] = useState(navigator.onLine)
@@ -55,13 +55,11 @@ export function SyncIndicator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncEnabled])
 
-  const supabaseConfigured = getSupabaseClient() !== null
-
-  if (!supabaseConfigured) {
+  if (!apiConfig.baseUrl) {
     return (
       <div
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-ink-900/[0.02] text-ink-700/60"
-        title="Supabase non configuré — mode hors ligne uniquement. Définissez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY."
+        title="Serveur UniVol non configuré — mode hors ligne uniquement. Définissez VITE_API_URL."
       >
         <CloudOff size={13} />
         Hors ligne
