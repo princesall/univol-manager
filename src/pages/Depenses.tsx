@@ -13,6 +13,7 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { CategorieDepense, Depense } from '@/types'
 import { PieChart as RPieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const LABEL_CATEGORIE: Record<CategorieDepense, string> = {
   alimentation: 'Alimentation',
@@ -126,33 +127,27 @@ export function Depenses() {
           ) : (
             <div className="-mx-2">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
-                  <thead>
-                    <tr className="border-b border-ink-900/8 text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                      <th className="px-2 py-2.5">Description</th>
-                      <th className="px-2 py-2.5">Catégorie</th>
-                      <th className="px-2 py-2.5">Montant</th>
-                      <th className="px-2 py-2.5">Date</th>
-                      <th className="px-2 py-2.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table minLargeur="min-w-[640px]">
+                  <THead>
+                      <TH className="px-2 py-3">Description</TH>
+                      <TH className="px-2 py-3">Catégorie</TH>
+                      <TH className="px-2 py-3">Montant</TH>
+                      <TH className="px-2 py-3">Date</TH>
+                      <TH className="px-2 py-3" />
+                    </THead>
+                  <TBody>
                     {list.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-2 py-8 text-center text-sm text-ink-700/50">
-                          Aucun résultat pour « {recherche} ».
-                        </td>
-                      </tr>
+                      <TableVide colSpan={5}>Aucun résultat pour « {recherche} ».</TableVide>
                     )}
                     {list.map((d) => (
-                      <tr key={d.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                        <td className="px-2 py-3 text-ink-900">{d.description}</td>
-                        <td className="px-2 py-3">
+                      <TR corps key={d.id}>
+                        <TD className="px-2 py-3 text-ink-900">{d.description}</TD>
+                        <TD className="px-2 py-3">
                           <Badge tone="neutral">{LABEL_CATEGORIE[d.categorie]}</Badge>
-                        </td>
-                        <td className="px-2 py-3 font-medium text-ink-900">{d.montant.toLocaleString('fr-FR')} FCFA</td>
-                        <td className="px-2 py-3 text-ink-700">{format(new Date(d.date), 'd MMM yyyy', { locale: fr })}</td>
-                        <td className="px-2 py-3">
+                        </TD>
+                        <TD className="px-2 py-3 font-medium text-ink-900">{d.montant.toLocaleString('fr-FR')} FCFA</TD>
+                        <TD className="px-2 py-3 text-ink-700">{format(new Date(d.date), 'd MMM yyyy', { locale: fr })}</TD>
+                        <TD className="px-2 py-3">
                           {peutModifier && (
                             <div className="flex justify-end gap-1">
                               <Button size="sm" variant="ghost" onClick={() => setModal({ mode: 'modifier', depense: d })} title="Modifier">
@@ -163,11 +158,11 @@ export function Depenses() {
                               </Button>
                             </div>
                           )}
-                        </td>
-                      </tr>
+                        </TD>
+                      </TR>
                     ))}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
             </div>
           )}

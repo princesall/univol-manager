@@ -14,6 +14,7 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { NameAutocomplete } from '@/components/ui/NameAutocomplete'
 import { FactureModal, PostVenteModal } from '@/components/invoice/FactureModal'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const LABEL_CATEGORIE: Record<CategorieBetail, string> = {
   chevre: 'Chèvres',
@@ -124,32 +125,26 @@ export function Betail() {
             </p>
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
-                  <thead>
-                    <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                      <th className="px-5 py-3">Référence</th>
-                      <th className="px-5 py-3">Catégorie</th>
-                      <th className="px-5 py-3">Effectif initial</th>
-                      <th className="px-5 py-3">Acquisition</th>
-                      {peutModifier && <th className="px-5 py-3" />}
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table minLargeur="min-w-[640px]">
+                  <THead>
+                      <TH>Référence</TH>
+                      <TH>Catégorie</TH>
+                      <TH>Effectif initial</TH>
+                      <TH>Acquisition</TH>
+                      {peutModifier && <TH />}
+                    </THead>
+                  <TBody>
                     {ecoules.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-8 text-center text-sm text-ink-700/50">
-                          Aucun lot écoulé pour le moment.
-                        </td>
-                      </tr>
+                      <TableVide colSpan={5}>Aucun lot écoulé pour le moment.</TableVide>
                     )}
                     {ecoules.map((l) => (
-                      <tr key={l.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                        <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{l.reference}</td>
-                        <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[l.categorie]}</Badge></td>
-                        <td className="px-5 py-3.5 text-ink-700">{l.effectifInitial.toLocaleString('fr-FR')}</td>
-                        <td className="px-5 py-3.5 text-ink-700">{format(new Date(l.dateAcquisition), 'd MMM yyyy', { locale: fr })}</td>
+                      <TR corps key={l.id}>
+                        <TD className="font-mono-data text-xs font-medium text-ink-900">{l.reference}</TD>
+                        <TD><Badge tone="neutral">{LABEL_CATEGORIE[l.categorie]}</Badge></TD>
+                        <TD className="text-ink-700">{l.effectifInitial.toLocaleString('fr-FR')}</TD>
+                        <TD className="text-ink-700">{format(new Date(l.dateAcquisition), 'd MMM yyyy', { locale: fr })}</TD>
                         {peutModifier && (
-                          <td className="px-5 py-3.5 text-right">
+                          <TD className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button size="sm" variant="ghost" onClick={() => setModal({ mode: 'modifier', lot: l })} title="Modifier">
                                 <Pencil size={13} />
@@ -158,12 +153,12 @@ export function Betail() {
                                 <Trash2 size={13} className="text-signal-red" />
                               </Button>
                             </div>
-                          </td>
+                          </TD>
                         )}
-                      </tr>
+                      </TR>
                     ))}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
             </Card>
           </section>

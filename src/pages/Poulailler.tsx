@@ -14,6 +14,7 @@ import { NameAutocomplete } from '@/components/ui/NameAutocomplete'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FactureModal, PostVenteModal } from '@/components/invoice/FactureModal'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 export function Poulailler() {
   const { user } = useAuth()
@@ -101,52 +102,46 @@ export function Poulailler() {
         </p>
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-<table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                <th className="px-5 py-3">Bande</th>
-                <th className="px-5 py-3">Lot d'origine</th>
-                <th className="px-5 py-3">Effectif initial</th>
-                <th className="px-5 py-3">Vendu</th>
-                <th className="px-5 py-3">Pertes (mortalité)</th>
-                <th className="px-5 py-3">Valorisation</th>
-                {peutModifier && <th className="px-5 py-3" />}
-              </tr>
-            </thead>
-            <tbody>
+<Table minLargeur="min-w-[640px]">
+            <THead>
+                <TH>Bande</TH>
+                <TH>Lot d'origine</TH>
+                <TH>Effectif initial</TH>
+                <TH>Vendu</TH>
+                <TH>Pertes (mortalité)</TH>
+                <TH>Valorisation</TH>
+                {peutModifier && <TH />}
+              </THead>
+            <TBody>
               {ecoulees.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-ink-700/50">
-                    {recherche ? `Aucun résultat pour « ${recherche} ».` : 'Aucune bande écoulée pour le moment.'}
-                  </td>
-                </tr>
+                <TableVide colSpan={6}>{recherche ? `Aucun résultat pour « ${recherche} ».` : 'Aucune bande écoulée pour le moment.'}</TableVide>
               )}
               {ecoulees.map((b) => {
                 const vendu = venduPour(b.id)
                 const pertes = Math.max(0, b.effectifInitial - vendu)
                 const valorisation = Math.round((vendu / b.effectifInitial) * 100)
                 return (
-                  <tr key={b.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                    <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{b.reference}</td>
-                    <td className="px-5 py-3.5 text-ink-700">{b.lotIncubationRef ?? '—'}</td>
-                    <td className="px-5 py-3.5 text-ink-700">{b.effectifInitial.toLocaleString('fr-FR')}</td>
-                    <td className="px-5 py-3.5 font-medium text-ink-900">{vendu.toLocaleString('fr-FR')}</td>
-                    <td className="px-5 py-3.5 text-ink-700">{pertes.toLocaleString('fr-FR')}</td>
-                    <td className="px-5 py-3.5">
+                  <TR corps key={b.id}>
+                    <TD className="font-mono-data text-xs font-medium text-ink-900">{b.reference}</TD>
+                    <TD className="text-ink-700">{b.lotIncubationRef ?? '—'}</TD>
+                    <TD className="text-ink-700">{b.effectifInitial.toLocaleString('fr-FR')}</TD>
+                    <TD className="font-medium text-ink-900">{vendu.toLocaleString('fr-FR')}</TD>
+                    <TD className="text-ink-700">{pertes.toLocaleString('fr-FR')}</TD>
+                    <TD>
                       <Badge tone={valorisation >= 95 ? 'success' : valorisation >= 85 ? 'warning' : 'danger'}>{valorisation}%</Badge>
-                    </td>
+                    </TD>
                     {peutModifier && (
-                      <td className="px-5 py-3.5 text-right">
+                      <TD className="text-right">
                         <Button size="sm" variant="ghost" onClick={() => setBandeASupprimer(b)} title="Supprimer">
                           <Trash2 size={13} className="text-signal-red" />
                         </Button>
-                      </td>
+                      </TD>
                     )}
-                  </tr>
+                  </TR>
                 )
               })}
-            </tbody>
-          </table>
+            </TBody>
+          </Table>
 </div>
         </Card>
       </section>

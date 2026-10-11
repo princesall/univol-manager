@@ -12,6 +12,7 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal, FormField, inputClass } from '@/components/ui/Modal'
 import type { CategorieStock, StockItem } from '@/types'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const LABEL_CATEGORIE: Record<CategorieStock, string> = {
   aliment: 'Aliments',
@@ -107,38 +108,34 @@ export function Stocks() {
           <SearchInput value={recherche} onChange={setRecherche} placeholder="Rechercher un article…" />
           <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                  <th className="px-5 py-3">Article</th>
-                  <th className="px-5 py-3">Catégorie</th>
-                  <th className="px-5 py-3">Quantité</th>
-                  <th className="px-5 py-3">Seuil d'alerte</th>
-                  <th className="px-5 py-3">Statut</th>
-                  {peutModifier && <th className="px-5 py-3" />}
-                </tr>
-              </thead>
-              <tbody>
+            <Table minLargeur="min-w-[720px]">
+              <THead>
+                  <TH>Article</TH>
+                  <TH>Catégorie</TH>
+                  <TH>Quantité</TH>
+                  <TH>Seuil d'alerte</TH>
+                  <TH>Statut</TH>
+                  {peutModifier && <TH />}
+                </THead>
+              <TBody>
                 {list.length === 0 && (
-                  <tr>
-                    <td colSpan={peutModifier ? 6 : 5} className="px-5 py-8 text-center text-sm text-ink-700/50">
-                      Aucun résultat pour « {recherche} ».
-                    </td>
-                  </tr>
+                  <TableVide colSpan={peutModifier ? 6 : 5}>
+                    Aucun résultat pour « {recherche} ».
+                  </TableVide>
                 )}
                 {list.map((i) => {
                   const bas = i.quantite <= i.seuilAlerte
                   return (
-                    <tr key={i.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                      <td className="px-5 py-3.5 font-medium text-ink-900">{i.nom}</td>
-                      <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[i.categorie]}</Badge></td>
-                      <td className="px-5 py-3.5 text-ink-700">{i.quantite.toLocaleString('fr-FR')} {i.unite}</td>
-                      <td className="px-5 py-3.5 text-ink-700/70">{i.seuilAlerte.toLocaleString('fr-FR')} {i.unite}</td>
-                      <td className="px-5 py-3.5">
+                    <TR corps key={i.id}>
+                      <TD className="font-medium text-ink-900">{i.nom}</TD>
+                      <TD><Badge tone="neutral">{LABEL_CATEGORIE[i.categorie]}</Badge></TD>
+                      <TD className="text-ink-700">{i.quantite.toLocaleString('fr-FR')} {i.unite}</TD>
+                      <TD className="text-ink-700/70">{i.seuilAlerte.toLocaleString('fr-FR')} {i.unite}</TD>
+                      <TD>
                         {bas ? <Badge tone="danger"><AlertTriangle size={11} /> Stock bas</Badge> : <Badge tone="success"><PackageCheck size={11} /> Suffisant</Badge>}
-                      </td>
+                      </TD>
                       {peutModifier && (
-                        <td className="px-5 py-3.5">
+                        <TD>
                           <div className="flex justify-end gap-1.5">
                             <Button
                               size="sm"
@@ -154,13 +151,13 @@ export function Stocks() {
                               <Trash2 size={13} className="text-signal-red" />
                             </Button>
                           </div>
-                        </td>
+                        </TD>
                       )}
-                    </tr>
+                    </TR>
                   )
                 })}
-              </tbody>
-            </table>
+              </TBody>
+            </Table>
           </div>
         </Card>
         </>

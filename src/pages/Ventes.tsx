@@ -14,6 +14,7 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FactureModal, PostVenteModal } from '@/components/invoice/FactureModal'
 import type { StatutPaiement, TypeVente, Vente, BandeVolaille } from '@/types'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const LABEL_STATUT: Record<StatutPaiement, string> = {
   paye: 'Payé',
@@ -130,43 +131,37 @@ export function Ventes() {
           <SearchInput value={recherche} onChange={setRecherche} placeholder="Rechercher par référence ou client…" />
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                    <th className="px-5 py-3">Référence</th>
-                    <th className="px-5 py-3">Client</th>
-                    <th className="px-5 py-3">Type</th>
-                    <th className="px-5 py-3">Quantité</th>
-                    <th className="px-5 py-3">Montant</th>
-                    <th className="px-5 py-3">Paiement</th>
-                    <th className="px-5 py-3">Date</th>
-                    <th className="px-5 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
+              <Table minLargeur="min-w-[720px]">
+                <THead>
+                    <TH>Référence</TH>
+                    <TH>Client</TH>
+                    <TH>Type</TH>
+                    <TH>Quantité</TH>
+                    <TH>Montant</TH>
+                    <TH>Paiement</TH>
+                    <TH>Date</TH>
+                    <TH />
+                  </THead>
+                <TBody>
                   {list.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-5 py-8 text-center text-sm text-ink-700/50">
-                        Aucun résultat pour « {recherche} ».
-                      </td>
-                    </tr>
+                    <TableVide colSpan={8}>Aucun résultat pour « {recherche} ».</TableVide>
                   )}
                   {list.map((v) => (
-                    <tr key={v.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                      <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{v.reference}</td>
-                      <td className="px-5 py-3.5 text-ink-900">{v.clientNom}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{LABEL_TYPE[v.type]}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{(v.quantite ?? 0).toLocaleString('fr-FR')}</td>
-                      <td className="px-5 py-3.5 font-medium text-ink-900">
+                    <TR corps key={v.id}>
+                      <TD className="font-mono-data text-xs font-medium text-ink-900">{v.reference}</TD>
+                      <TD className="text-ink-900">{v.clientNom}</TD>
+                      <TD className="text-ink-700">{LABEL_TYPE[v.type]}</TD>
+                      <TD className="text-ink-700">{(v.quantite ?? 0).toLocaleString('fr-FR')}</TD>
+                      <TD className="font-medium text-ink-900">
                         {(v.montantTotal ?? 0).toLocaleString('fr-FR')} FCFA
-                      </td>
-                      <td className="px-5 py-3.5">
+                      </TD>
+                      <TD>
                         <Badge tone={TONE_STATUT[v.statutPaiement]}>{LABEL_STATUT[v.statutPaiement]}</Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-ink-700">
+                      </TD>
+                      <TD className="text-ink-700">
                         {format(new Date(v.dateVente), 'd MMM yyyy', { locale: fr })}
-                      </td>
-                      <td className="px-5 py-3.5">
+                      </TD>
+                      <TD>
                         <div className="flex justify-end gap-1">
                           <Button size="sm" variant="ghost" onClick={() => setFactureAAfficher(v)} title="Facture">
                             <FileText size={13} />
@@ -187,11 +182,11 @@ export function Ventes() {
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   ))}
-                </tbody>
-              </table>
+                </TBody>
+              </Table>
             </div>
           </Card>
         </>

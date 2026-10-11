@@ -13,6 +13,7 @@ import { NameAutocomplete } from '@/components/ui/NameAutocomplete'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Achat, CategorieAchat, StatutPaiement } from '@/types'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const LABEL_CATEGORIE: Record<CategorieAchat, string> = {
   oeufs: 'Œufs fécondés',
@@ -108,37 +109,31 @@ export function Achats() {
           <SearchInput value={recherche} onChange={setRecherche} placeholder="Rechercher par référence, fournisseur, description…" />
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                    <th className="px-5 py-3">Référence</th>
-                    <th className="px-5 py-3">Fournisseur</th>
-                    <th className="px-5 py-3">Catégorie</th>
-                    <th className="px-5 py-3">Description</th>
-                    <th className="px-5 py-3">Montant</th>
-                    <th className="px-5 py-3">Paiement</th>
-                    <th className="px-5 py-3">Date</th>
-                    <th className="px-5 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
+              <Table minLargeur="min-w-[760px]">
+                <THead>
+                    <TH>Référence</TH>
+                    <TH>Fournisseur</TH>
+                    <TH>Catégorie</TH>
+                    <TH>Description</TH>
+                    <TH>Montant</TH>
+                    <TH>Paiement</TH>
+                    <TH>Date</TH>
+                    <TH />
+                  </THead>
+                <TBody>
                   {list.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-5 py-8 text-center text-sm text-ink-700/50">
-                        Aucun résultat pour « {recherche} ».
-                      </td>
-                    </tr>
+                    <TableVide colSpan={8}>Aucun résultat pour « {recherche} ».</TableVide>
                   )}
                   {list.map((a) => (
-                    <tr key={a.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                      <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{a.reference}</td>
-                      <td className="px-5 py-3.5 text-ink-900">{a.fournisseurNom}</td>
-                      <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[a.categorie]}</Badge></td>
-                      <td className="px-5 py-3.5 text-ink-700">{a.description}</td>
-                      <td className="px-5 py-3.5 font-medium text-ink-900">{a.montant.toLocaleString('fr-FR')} FCFA</td>
-                      <td className="px-5 py-3.5"><Badge tone={TONE_STATUT[a.statutPaiement]}>{LABEL_STATUT[a.statutPaiement]}</Badge></td>
-                      <td className="px-5 py-3.5 text-ink-700">{format(new Date(a.date), 'd MMM yyyy', { locale: fr })}</td>
-                      <td className="px-5 py-3.5">
+                    <TR corps key={a.id}>
+                      <TD className="font-mono-data text-xs font-medium text-ink-900">{a.reference}</TD>
+                      <TD className="text-ink-900">{a.fournisseurNom}</TD>
+                      <TD><Badge tone="neutral">{LABEL_CATEGORIE[a.categorie]}</Badge></TD>
+                      <TD className="text-ink-700">{a.description}</TD>
+                      <TD className="font-medium text-ink-900">{a.montant.toLocaleString('fr-FR')} FCFA</TD>
+                      <TD><Badge tone={TONE_STATUT[a.statutPaiement]}>{LABEL_STATUT[a.statutPaiement]}</Badge></TD>
+                      <TD className="text-ink-700">{format(new Date(a.date), 'd MMM yyyy', { locale: fr })}</TD>
+                      <TD>
                         {peutModifier && (
                           <div className="flex justify-end gap-1">
                             {a.statutPaiement !== 'paye' && (
@@ -154,11 +149,11 @@ export function Achats() {
                             </Button>
                           </div>
                         )}
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   ))}
-                </tbody>
-              </table>
+                </TBody>
+              </Table>
             </div>
           </Card>
         </>

@@ -10,6 +10,7 @@ import { useAuth } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card, Badge, EmptyState } from '@/components/ui/Primitives'
 import { Modal, FormField, inputClass } from '@/components/ui/Modal'
+import { Table, THead, TBody, TR, TH, TD, TableVide } from '@/components/ui/Table'
 
 const DUREE_INCUBATION_JOURS = 21
 
@@ -153,41 +154,35 @@ export function Couvoir() {
         </p>
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/8 bg-ink-900/[0.02] text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-                  <th className="px-5 py-3">Lot</th>
-                  <th className="px-5 py-3">Couveuse</th>
-                  <th className="px-5 py-3">Œufs</th>
-                  <th className="px-5 py-3">Poussins éclos</th>
-                  <th className="px-5 py-3">Taux d'éclosion</th>
-                  <th className="px-5 py-3">Date d'éclosion</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody>
+            <Table minLargeur="min-w-[640px]">
+              <THead>
+                  <TH>Lot</TH>
+                  <TH>Couveuse</TH>
+                  <TH>Œufs</TH>
+                  <TH>Poussins éclos</TH>
+                  <TH>Taux d'éclosion</TH>
+                  <TH>Date d'éclosion</TH>
+                  <TH />
+                </THead>
+              <TBody>
                 {clos.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center text-sm text-ink-700/50">
-                      Aucune éclosion enregistrée pour le moment.
-                    </td>
-                  </tr>
+                  <TableVide colSpan={7}>Aucune éclosion enregistrée pour le moment.</TableVide>
                 )}
                 {clos.map((lot) => {
                   const taux = lot.poussinsEclos ? Math.round((lot.poussinsEclos / lot.quantiteOeufs) * 100) : 0
                   return (
-                    <tr key={lot.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                      <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{lot.reference}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{lot.couveuse}</td>
-                      <td className="px-5 py-3.5 text-ink-700">{(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')}</td>
-                      <td className="px-5 py-3.5 font-medium text-ink-900">{(lot.poussinsEclos ?? 0).toLocaleString('fr-FR')}</td>
-                      <td className="px-5 py-3.5">
+                    <TR corps key={lot.id}>
+                      <TD className="font-mono-data text-xs font-medium text-ink-900">{lot.reference}</TD>
+                      <TD className="text-ink-700">{lot.couveuse}</TD>
+                      <TD className="text-ink-700">{(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')}</TD>
+                      <TD className="font-medium text-ink-900">{(lot.poussinsEclos ?? 0).toLocaleString('fr-FR')}</TD>
+                      <TD>
                         <Badge tone={taux >= 90 ? 'success' : taux >= 80 ? 'warning' : 'danger'}>{taux}%</Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-ink-700">
+                      </TD>
+                      <TD className="text-ink-700">
                         {lot.dateEclosionReelle && format(new Date(lot.dateEclosionReelle), 'd MMM yyyy', { locale: fr })}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
+                      </TD>
+                      <TD className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button size="sm" variant="ghost" onClick={() => setLotDetail(lot)}>
                             <Eye size={13} /> Détail
@@ -203,12 +198,12 @@ export function Couvoir() {
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   )
                 })}
-              </tbody>
-            </table>
+              </TBody>
+            </Table>
           </div>
         </Card>
       </section>

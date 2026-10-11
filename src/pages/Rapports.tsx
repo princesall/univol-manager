@@ -7,6 +7,7 @@ import { FileText, TrendingUp, Egg, Boxes } from 'lucide-react'
 import { db, filterActive } from '@/lib/db'
 import { Card, Badge, StatCard } from '@/components/ui/Primitives'
 import { Button } from '@/components/ui/Button'
+import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/Table'
 
 export function Rapports() {
   const lots = useLiveQuery(() => db.lotsIncubation.toArray().then(filterActive), [])
@@ -152,39 +153,37 @@ export function Rapports() {
           </Button>
         </div>
         <div className="overflow-x-auto">
-<table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="border-b border-ink-900/8 text-left text-xs font-medium uppercase tracking-wide text-ink-700/60">
-              <th className="px-5 py-3">Lot</th>
-              <th className="px-5 py-3">Œufs</th>
-              <th className="px-5 py-3">Poussins éclos</th>
-              <th className="px-5 py-3">Taux d'éclosion</th>
-              <th className="px-5 py-3">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
+<Table minLargeur="min-w-[640px]">
+          <THead>
+              <TH>Lot</TH>
+              <TH>Œufs</TH>
+              <TH>Poussins éclos</TH>
+              <TH>Taux d'éclosion</TH>
+              <TH>Statut</TH>
+            </THead>
+          <TBody>
             {(lots ?? []).map((l) => {
               const taux = l.poussinsEclos ? Math.round((l.poussinsEclos / l.quantiteOeufs) * 100) : null
               return (
-                <tr key={l.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
-                  <td className="px-5 py-3 font-mono-data text-xs font-medium text-ink-900">{l.reference}</td>
-                  <td className="px-5 py-3 text-ink-700">{l.quantiteOeufs.toLocaleString('fr-FR')}</td>
-                  <td className="px-5 py-3 text-ink-700">{l.poussinsEclos?.toLocaleString('fr-FR') ?? '—'}</td>
-                  <td className="px-5 py-3">
+                <TR corps key={l.id}>
+                  <TD className="font-mono-data text-xs font-medium text-ink-900">{l.reference}</TD>
+                  <TD className="text-ink-700">{l.quantiteOeufs.toLocaleString('fr-FR')}</TD>
+                  <TD className="text-ink-700">{l.poussinsEclos?.toLocaleString('fr-FR') ?? '—'}</TD>
+                  <TD>
                     {taux !== null ? (
                       <Badge tone={taux >= 90 ? 'success' : taux >= 80 ? 'warning' : 'danger'}>{taux}%</Badge>
                     ) : (
                       <span className="text-ink-700/40">—</span>
                     )}
-                  </td>
-                  <td className="px-5 py-3">
+                  </TD>
+                  <TD>
                     <Badge tone={l.statut === 'eclos' ? 'success' : 'info'}>{l.statut === 'eclos' ? 'Éclos' : 'En cours'}</Badge>
-                  </td>
-                </tr>
+                  </TD>
+                </TR>
               )
             })}
-          </tbody>
-        </table>
+          </TBody>
+        </Table>
 </div>
       </Card>
     </div>
