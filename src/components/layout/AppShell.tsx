@@ -76,7 +76,7 @@ export function AppShell() {
         <img src={assetUrl('logo.jpg')} alt="UniVol Mali" className="h-11 w-11 shrink-0 rounded-full object-cover" />
         <div>
           <p className="font-display text-base font-semibold leading-tight">UniVol</p>
-          <p className="text-[11px] uppercase tracking-wider text-parchment-100/50">Manager</p>
+          <p className="text-2xs uppercase tracking-wider text-parchment-100/50">Manager</p>
         </div>
         <button
           onClick={() => setMenuOuvert(false)}
@@ -131,7 +131,7 @@ export function AppShell() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{user.nom}</p>
-            <p className="truncate text-[11px] text-parchment-100/50">{ROLE_LABELS[user.role]}</p>
+            <p className="truncate text-2xs text-parchment-100/50">{ROLE_LABELS[user.role]}</p>
           </div>
           <button
             onClick={() => {

@@ -13,6 +13,13 @@ html, body, #root {
 body {
   @apply bg-parchment-50 text-ink-900 font-body antialiased;
   font-feature-settings: "cv11", "ss01";
+
+  /* Chiffres à chasse fixe partout.
+     Sans cela, dans un tableau de montants en FCFA, le chiffre « 1 » occupe
+     moins de place que le « 8 » : les colonnes de nombres ondulent et rien ne
+     s'aligne verticalement. C'est le détail qui distingue une application
+     soignée d'une application approximative — et il ne coûte rien. */
+  font-variant-numeric: tabular-nums;
 }
 
 * {

@@ -126,7 +126,7 @@ export function Poulailler() {
                 const pertes = Math.max(0, b.effectifInitial - vendu)
                 const valorisation = Math.round((vendu / b.effectifInitial) * 100)
                 return (
-                  <tr key={b.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                  <tr key={b.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                     <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{b.reference}</td>
                     <td className="px-5 py-3.5 text-ink-700">{b.lotIncubationRef ?? '—'}</td>
                     <td className="px-5 py-3.5 text-ink-700">{b.effectifInitial.toLocaleString('fr-FR')}</td>
@@ -227,7 +227,7 @@ function BandeCard({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/6 pt-3.5">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/8 pt-3.5">
         <Badge tone={tauxPerte >= 10 ? 'danger' : tauxPerte >= 5 ? 'warning' : 'success'}>
           <Skull size={11} /> {tauxPerte}% de pertes
         </Badge>
@@ -476,7 +476,7 @@ function EcoulerModal({
               onChange={(e) => setMontantPaye(e.target.value)}
             />
             {montantTotal > 0 && (
-              <p className="mt-1.5 text-[11px] text-ink-700/50">
+              <p className="mt-1.5 text-2xs text-ink-700/50">
                 {Number(montantPaye) >= montantTotal && montantPaye
                   ? 'Ce montant couvre le total — la vente sera enregistrée comme "Payé".'
                   : `Reste à payer : ${Math.max(0, montantTotal - (Number(montantPaye) || 0)).toLocaleString('fr-FR')} FCFA`}
@@ -613,7 +613,7 @@ function SanteModal({
           ) : (
             <div className="max-h-64 space-y-2 overflow-y-auto">
               {soins.map((s) => (
-                <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg border border-ink-900/6 px-3.5 py-2.5">
+                <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg border border-ink-900/8 px-3.5 py-2.5">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Badge tone={s.type === 'vaccination' ? 'success' : s.type === 'traitement' ? 'warning' : 'info'}>

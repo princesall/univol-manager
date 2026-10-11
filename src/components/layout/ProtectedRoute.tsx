@@ -13,7 +13,7 @@ export function ModuleRoute({ moduleKey, children }: { moduleKey: string; childr
   if (!user) return <Navigate to="/connexion" replace />
   if (!ROLE_MODULE_ACCESS[user.role].includes(moduleKey)) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl2 border border-dashed border-ink-900/15 bg-ink-900/[0.02] px-6 py-20 text-center">
+      <div className="flex flex-col items-center justify-center rounded-xl2 border border-dashed border-ink-900/12 bg-ink-900/[0.02] px-6 py-20 text-center">
         <p className="font-display text-lg font-semibold text-ink-900">Accès non autorisé</p>
         <p className="mt-1.5 max-w-sm text-sm text-ink-700/70">
           Votre rôle ne dispose pas des permissions nécessaires pour consulter ce module.

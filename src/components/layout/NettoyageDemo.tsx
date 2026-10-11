@@ -95,7 +95,7 @@ export function NettoyageDemo({ open, onClose }: { open: boolean; onClose: () =>
 
         {!chargement && lignes.length > 0 && (
           <>
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-ink-900/10 px-3.5 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-ink-900/12 px-3.5 py-3">
               <p className="text-sm font-semibold text-ink-900">
                 {lignes.length} enregistrement(s) de démonstration détecté(s)
               </p>
@@ -143,7 +143,7 @@ export function NettoyageDemo({ open, onClose }: { open: boolean; onClose: () =>
                       <span className="font-mono text-xs font-medium text-ink-900">
                         {ligne.libelle}
                       </span>
-                      <span className="text-[10px] text-ink-700/60">{ligne.motif}</span>
+                      <span className="text-2xs text-ink-700/60">{ligne.motif}</span>
                     </div>
                   ))}
                 </div>

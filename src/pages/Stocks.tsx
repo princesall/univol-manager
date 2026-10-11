@@ -129,7 +129,7 @@ export function Stocks() {
                 {list.map((i) => {
                   const bas = i.quantite <= i.seuilAlerte
                   return (
-                    <tr key={i.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                    <tr key={i.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                       <td className="px-5 py-3.5 font-medium text-ink-900">{i.nom}</td>
                       <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[i.categorie]}</Badge></td>
                       <td className="px-5 py-3.5 text-ink-700">{i.quantite.toLocaleString('fr-FR')} {i.unite}</td>

@@ -145,7 +145,7 @@ export function Depenses() {
                       </tr>
                     )}
                     {list.map((d) => (
-                      <tr key={d.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                      <tr key={d.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                         <td className="px-2 py-3 text-ink-900">{d.description}</td>
                         <td className="px-2 py-3">
                           <Badge tone="neutral">{LABEL_CATEGORIE[d.categorie]}</Badge>

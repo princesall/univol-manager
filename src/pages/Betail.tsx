@@ -143,7 +143,7 @@ export function Betail() {
                       </tr>
                     )}
                     {ecoules.map((l) => (
-                      <tr key={l.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                      <tr key={l.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                         <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{l.reference}</td>
                         <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[l.categorie]}</Badge></td>
                         <td className="px-5 py-3.5 text-ink-700">{l.effectifInitial.toLocaleString('fr-FR')}</td>
@@ -276,7 +276,7 @@ function LotBetailCard({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/6 pt-3.5">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/8 pt-3.5">
         <Badge tone={tauxPerte >= 10 ? 'danger' : tauxPerte >= 5 ? 'warning' : 'success'}>
           <Skull size={11} /> {tauxPerte}% de pertes
         </Badge>
@@ -636,7 +636,7 @@ function SanteBetailModal({
           ) : (
             <div className="max-h-64 space-y-2 overflow-y-auto">
               {soins.map((s) => (
-                <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg border border-ink-900/6 px-3.5 py-2.5">
+                <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg border border-ink-900/8 px-3.5 py-2.5">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Badge tone={s.type === 'vaccination' ? 'success' : s.type === 'traitement' ? 'warning' : 'info'}>

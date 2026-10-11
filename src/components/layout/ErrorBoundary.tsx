@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <RefreshCw size={15} /> Recharger l'application
           </button>
           {this.state.erreur.message && (
-            <p className="mt-6 max-w-md break-words rounded-lg bg-ink-900/[0.03] px-3.5 py-2.5 font-mono-data text-[11px] text-ink-700/60">
+            <p className="mt-6 max-w-md break-words rounded-lg bg-ink-900/[0.03] px-3.5 py-2.5 font-mono-data text-2xs text-ink-700/60">
               {this.state.erreur.message}
             </p>
           )}

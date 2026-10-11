@@ -130,7 +130,7 @@ export function Achats() {
                     </tr>
                   )}
                   {list.map((a) => (
-                    <tr key={a.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                    <tr key={a.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                       <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{a.reference}</td>
                       <td className="px-5 py-3.5 text-ink-900">{a.fournisseurNom}</td>
                       <td className="px-5 py-3.5"><Badge tone="neutral">{LABEL_CATEGORIE[a.categorie]}</Badge></td>
@@ -343,7 +343,7 @@ function AchatFormModal({
 
         {lieAuStock && !estModification && (
           <div className="space-y-4 rounded-lg border border-yolk-500/25 bg-yolk-500/5 p-3.5">
-            <p className="text-[11px] font-medium text-yolk-700">
+            <p className="text-2xs font-medium text-yolk-700">
               Cet achat alimentera automatiquement le stock correspondant.
             </p>
             <FormField label="Article en stock">
@@ -374,7 +374,7 @@ function AchatFormModal({
           </div>
         )}
         {estModification && (
-          <p className="text-[11px] text-ink-700/50">
+          <p className="text-2xs text-ink-700/50">
             Le stock déjà crédité par cet achat n'est pas recalculé automatiquement lors d'une modification.
           </p>
         )}
@@ -414,7 +414,7 @@ function AchatFormModal({
               onChange={(e) => setMontantPayeSaisi(e.target.value)}
             />
             {montant && (
-              <p className="mt-1.5 text-[11px] text-ink-700/50">
+              <p className="mt-1.5 text-2xs text-ink-700/50">
                 {Number(montantPayeSaisi) >= Number(montant) && montantPayeSaisi
                   ? 'Ce montant couvre le total — l\u2019achat sera enregistré comme "Payé".'
                   : `Reste dû : ${Math.max(0, Number(montant) - (Number(montantPayeSaisi) || 0)).toLocaleString('fr-FR')} FCFA`}
@@ -475,7 +475,7 @@ function PaiementAchatModal({
         <div className="space-y-1.5 rounded-lg bg-ink-900/[0.03] px-3.5 py-3 text-xs text-ink-700">
           <div className="flex justify-between"><span>Montant total</span><span className="font-medium text-ink-900">{achat.montant.toLocaleString('fr-FR')} FCFA</span></div>
           <div className="flex justify-between"><span>Déjà versé</span><span className="font-medium text-ink-900">{achat.montantPaye.toLocaleString('fr-FR')} FCFA</span></div>
-          <div className="flex justify-between border-t border-ink-900/10 pt-1.5"><span className="font-medium text-clay-600">Reste dû</span><span className="font-semibold text-clay-600">{resteActuel.toLocaleString('fr-FR')} FCFA</span></div>
+          <div className="flex justify-between border-t border-ink-900/12 pt-1.5"><span className="font-medium text-clay-600">Reste dû</span><span className="font-semibold text-clay-600">{resteActuel.toLocaleString('fr-FR')} FCFA</span></div>
         </div>
         <FormField label="Montant versé maintenant (FCFA)">
           <input

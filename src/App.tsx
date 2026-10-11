@@ -46,7 +46,7 @@ export default function App() {
           <Route
             path="*"
             element={
-              <div className="flex flex-col items-center justify-center rounded-xl2 border border-dashed border-ink-900/15 bg-ink-900/[0.02] px-6 py-20 text-center">
+              <div className="flex flex-col items-center justify-center rounded-xl2 border border-dashed border-ink-900/12 bg-ink-900/[0.02] px-6 py-20 text-center">
                 <p className="font-display text-lg font-semibold text-ink-900">Page introuvable</p>
                 <p className="mt-1.5 max-w-sm text-sm text-ink-700/70">
                   Si tu viens d'ouvrir un lien vers une page nouvellement ajoutée, essaie de recharger

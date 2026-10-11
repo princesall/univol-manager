@@ -164,34 +164,34 @@ export function ConflitsSync({ open, onClose }: { open: boolean; onClose: () => 
               {liste.map((detail) => (
                 <div
                   key={detail.conflit.id}
-                  className="rounded-lg border border-ink-900/10 p-3"
+                  className="rounded-lg border border-ink-900/12 p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-mono text-xs font-semibold text-ink-900">
                       {detail.conflit.libelle}
                     </p>
-                    <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                    <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 text-2xs font-medium text-red-700">
                       {detail.conflit.cause}
                     </span>
                   </div>
 
                   {detail.jumeaux.length > 1 ? (
                     <div className="mt-2 space-y-1">
-                      <p className="text-[11px] font-medium text-ink-700">
+                      <p className="text-2xs font-medium text-ink-700">
                         {detail.jumeaux.length} enregistrements portent cette valeur dans votre
                         base — comparez-les :
                       </p>
                       {detail.jumeaux.map((jumeau) => (
                         <p
                           key={String(jumeau.id)}
-                          className="pl-3 text-[11px] leading-relaxed text-ink-700/80"
+                          className="pl-3 text-2xs leading-relaxed text-ink-700/80"
                         >
                           • {decrire(jumeau)}
                         </p>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-2 text-[11px] text-ink-700/70">
+                    <p className="mt-2 text-2xs text-ink-700/70">
                       Aucun jumeau local pour cette valeur : le conflit provient du serveur
                       (enregistrement supprimé sur un autre poste, ou créé différemment).
                     </p>

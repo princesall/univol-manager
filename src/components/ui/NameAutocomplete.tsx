@@ -51,7 +51,7 @@ export function NameAutocomplete({
 
       {value.trim() && (
         <p
-          className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-medium ${
+          className={`mt-1.5 flex items-center gap-1.5 text-2xs font-medium ${
             correspondanceExacte ? 'text-moss-600' : 'text-ink-700/55'
           }`}
         >
@@ -61,7 +61,7 @@ export function NameAutocomplete({
       )}
 
       {ouvert && filtrees.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-ink-900/10 bg-white shadow-panel">
+        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-ink-900/12 bg-white shadow-panel">
           {filtrees.map((s) => (
             <button
               key={s}

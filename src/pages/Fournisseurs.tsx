@@ -114,7 +114,7 @@ export function Fournisseurs() {
                         <ChevronRight size={16} className="mt-1 shrink-0 text-ink-700/30" />
                       )}
                     </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-ink-900/6 pt-3.5 text-xs">
+                    <div className="mt-4 flex items-center justify-between border-t border-ink-900/8 pt-3.5 text-xs">
                       <span className="flex items-center gap-1 text-ink-700/70">
                         {stats.nbAchats} achat(s) · {stats.totalAchete.toLocaleString('fr-FR')} FCFA
                         <ChevronRight size={12} className="text-ink-700/40" />
@@ -258,17 +258,17 @@ function HistoriqueFournisseurModal({
         <div className="grid grid-cols-3 gap-3 rounded-lg bg-ink-900/[0.03] px-4 py-3 text-center">
           <div>
             <p className="font-display text-lg font-semibold text-ink-950">{historique.length}</p>
-            <p className="text-[11px] text-ink-700/60">Achat(s)</p>
+            <p className="text-2xs text-ink-700/60">Achat(s)</p>
           </div>
           <div>
             <p className="font-display text-lg font-semibold text-ink-950">{total.toLocaleString('fr-FR')}</p>
-            <p className="text-[11px] text-ink-700/60">Total (FCFA)</p>
+            <p className="text-2xs text-ink-700/60">Total (FCFA)</p>
           </div>
           <div>
             <p className={`font-display text-lg font-semibold ${dette > 0 ? 'text-signal-red' : 'text-moss-600'}`}>
               {dette.toLocaleString('fr-FR')}
             </p>
-            <p className="text-[11px] text-ink-700/60">Dette (FCFA)</p>
+            <p className="text-2xs text-ink-700/60">Dette (FCFA)</p>
           </div>
         </div>
 
@@ -277,7 +277,7 @@ function HistoriqueFournisseurModal({
         ) : (
           <div className="max-h-96 space-y-2 overflow-y-auto">
             {historique.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-ink-900/6 px-3.5 py-2.5">
+              <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-ink-900/8 px-3.5 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-mono-data text-xs font-medium text-ink-900">{a.reference}</p>

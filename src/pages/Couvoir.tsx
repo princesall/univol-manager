@@ -176,7 +176,7 @@ export function Couvoir() {
                 {clos.map((lot) => {
                   const taux = lot.poussinsEclos ? Math.round((lot.poussinsEclos / lot.quantiteOeufs) * 100) : 0
                   return (
-                    <tr key={lot.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                    <tr key={lot.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                       <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{lot.reference}</td>
                       <td className="px-5 py-3.5 text-ink-700">{lot.couveuse}</td>
                       <td className="px-5 py-3.5 text-ink-700">{(lot.quantiteOeufs ?? 0).toLocaleString('fr-FR')}</td>
@@ -300,7 +300,7 @@ function LotEnCoursCard({
       </div>
 
       {(lot.quantiteApresMirage1 !== undefined || lot.quantiteApresMirage2 !== undefined) && (
-        <div className="mt-3 flex gap-3 border-t border-ink-900/6 pt-3 text-xs text-ink-700/70">
+        <div className="mt-3 flex gap-3 border-t border-ink-900/8 pt-3 text-xs text-ink-700/70">
           {lot.quantiteApresMirage1 !== undefined && (
             <span>1er mirage : <span className="font-medium text-ink-900">{(lot.quantiteApresMirage1 ?? 0).toLocaleString('fr-FR')}</span></span>
           )}
@@ -310,7 +310,7 @@ function LotEnCoursCard({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/6 pt-3.5">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/8 pt-3.5">
         {pret ? (
           <Badge tone="warning">
             <Egg size={11} /> Prêt à éclore
@@ -773,14 +773,14 @@ function LotDetailModal({ lot, onClose }: { lot: LotIncubation | null; onClose: 
     <Modal open={!!lot} onClose={onClose} title={`Fiche du lot — ${lot.reference}`} width="max-w-lg">
       <div className="space-y-1">
         {etapes.map((e, i) => (
-          <div key={e.label} className="flex items-center justify-between border-b border-ink-900/6 py-3 last:border-0">
+          <div key={e.label} className="flex items-center justify-between border-b border-ink-900/8 py-3 last:border-0">
             <div className="flex items-center gap-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink-900/[0.05] font-mono-data text-[11px] font-medium text-ink-700">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink-900/[0.05] font-mono-data text-2xs font-medium text-ink-700">
                 {i + 1}
               </span>
               <div>
                 <p className="text-sm font-medium text-ink-900">{e.label}</p>
-                {e.note && <p className="text-[11px] text-ink-700/50">{e.note}</p>}
+                {e.note && <p className="text-2xs text-ink-700/50">{e.note}</p>}
               </div>
             </div>
             <p className="font-display text-base font-semibold text-ink-950">

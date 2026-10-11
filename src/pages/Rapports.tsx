@@ -166,7 +166,7 @@ export function Rapports() {
             {(lots ?? []).map((l) => {
               const taux = l.poussinsEclos ? Math.round((l.poussinsEclos / l.quantiteOeufs) * 100) : null
               return (
-                <tr key={l.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                <tr key={l.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                   <td className="px-5 py-3 font-mono-data text-xs font-medium text-ink-900">{l.reference}</td>
                   <td className="px-5 py-3 text-ink-700">{l.quantiteOeufs.toLocaleString('fr-FR')}</td>
                   <td className="px-5 py-3 text-ink-700">{l.poussinsEclos?.toLocaleString('fr-FR') ?? '—'}</td>

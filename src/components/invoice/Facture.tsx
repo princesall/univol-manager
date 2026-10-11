@@ -37,10 +37,10 @@ export function Facture({ vente }: { vente: Vente }) {
               {ENTREPRISE.nom}
             </p>
             <p className="text-xs text-ink-700">{ENTREPRISE.slogan}</p>
-            <p className="mt-1 text-[11px] text-ink-700/70">
+            <p className="mt-1 text-2xs text-ink-700/70">
               {ENTREPRISE.adresse} · {ENTREPRISE.telephone}
             </p>
-            <p className="text-[11px] text-ink-700/70">{ENTREPRISE.email}</p>
+            <p className="text-2xs text-ink-700/70">{ENTREPRISE.email}</p>
           </div>
         </div>
         <div className="text-right">
@@ -57,12 +57,12 @@ export function Facture({ vente }: { vente: Vente }) {
       {/* Facturé à */}
       <div className="mt-8 flex justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-700/60">Facturé à</p>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-700/60">Facturé à</p>
           <p className="mt-1.5 text-base font-semibold text-ink-950">{vente.clientNom}</p>
           {vente.clientTelephone && <p className="text-xs text-ink-700/70">{vente.clientTelephone}</p>}
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-700/60">Statut du paiement</p>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-700/60">Statut du paiement</p>
           <p
             className="mt-1.5 inline-block rounded-full px-3 py-1 text-xs font-semibold"
             style={{
@@ -73,7 +73,7 @@ export function Facture({ vente }: { vente: Vente }) {
           >
             {LABEL_STATUT[vente.statutPaiement]}
           </p>
-          {vente.bandeRef && <p className="mt-1.5 text-[11px] text-ink-700/60">Bande d'origine : {vente.bandeRef}</p>}
+          {vente.bandeRef && <p className="mt-1.5 text-2xs text-ink-700/60">Bande d'origine : {vente.bandeRef}</p>}
         </div>
       </div>
 
@@ -81,14 +81,14 @@ export function Facture({ vente }: { vente: Vente }) {
       <table className="mt-8 w-full border-collapse text-sm">
         <thead>
           <tr className="border-b-2 border-ink-950">
-            <th className="py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-ink-700/70">Désignation</th>
-            <th className="py-2.5 text-right text-[10px] font-semibold uppercase tracking-wide text-ink-700/70">Quantité</th>
-            <th className="py-2.5 text-right text-[10px] font-semibold uppercase tracking-wide text-ink-700/70">Prix unitaire</th>
-            <th className="py-2.5 text-right text-[10px] font-semibold uppercase tracking-wide text-ink-700/70">Montant</th>
+            <th className="py-2.5 text-left text-2xs font-semibold uppercase tracking-wide text-ink-700/70">Désignation</th>
+            <th className="py-2.5 text-right text-2xs font-semibold uppercase tracking-wide text-ink-700/70">Quantité</th>
+            <th className="py-2.5 text-right text-2xs font-semibold uppercase tracking-wide text-ink-700/70">Prix unitaire</th>
+            <th className="py-2.5 text-right text-2xs font-semibold uppercase tracking-wide text-ink-700/70">Montant</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="border-b border-ink-900/10">
+          <tr className="border-b border-ink-900/12">
             <td className="py-3.5 text-ink-900">{LABEL_TYPE[vente.type] ?? vente.type}</td>
             <td className="py-3.5 text-right text-ink-700">{vente.quantite.toLocaleString('fr-FR')}</td>
             <td className="py-3.5 text-right text-ink-700">{vente.prixUnitaire.toLocaleString('fr-FR')} FCFA</td>
@@ -120,17 +120,17 @@ export function Facture({ vente }: { vente: Vente }) {
         <div>
           <div className="h-16 border-b border-ink-900/40" />
           <p className="mt-2 text-xs font-medium text-ink-900">Le client</p>
-          <p className="text-[10px] text-ink-700/60">Nom et signature</p>
+          <p className="text-2xs text-ink-700/60">Nom et signature</p>
         </div>
         <div>
           <div className="h-16 border-b border-ink-900/40" />
           <p className="mt-2 text-xs font-medium text-ink-900">Pour {ENTREPRISE.nom}</p>
-          <p className="text-[10px] text-ink-700/60">Nom, fonction et signature</p>
+          <p className="text-2xs text-ink-700/60">Nom, fonction et signature</p>
         </div>
       </div>
 
       {/* Pied de page */}
-      <p className="mt-16 border-t border-ink-900/10 pt-4 text-center text-[10px] text-ink-700/50">
+      <p className="mt-16 border-t border-ink-900/12 pt-4 text-center text-2xs text-ink-700/50">
         Merci de votre confiance — {ENTREPRISE.nom}, {ENTREPRISE.adresse}
       </p>
     </div>

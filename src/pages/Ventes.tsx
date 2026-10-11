@@ -152,7 +152,7 @@ export function Ventes() {
                     </tr>
                   )}
                   {list.map((v) => (
-                    <tr key={v.id} className="border-b border-ink-900/6 last:border-0 hover:bg-ink-900/[0.015]">
+                    <tr key={v.id} className="border-b border-ink-900/8 last:border-0 hover:bg-ink-900/[0.015]">
                       <td className="px-5 py-3.5 font-mono-data text-xs font-medium text-ink-900">{v.reference}</td>
                       <td className="px-5 py-3.5 text-ink-900">{v.clientNom}</td>
                       <td className="px-5 py-3.5 text-ink-700">{LABEL_TYPE[v.type]}</td>
@@ -461,7 +461,7 @@ function VenteFormModal({
                 </option>
               ))}
             </select>
-            <p className="mt-1.5 text-[11px] text-ink-700/50">
+            <p className="mt-1.5 text-2xs text-ink-700/50">
               {bandeSelectionnee
                 ? "L'effectif de cette bande sera automatiquement diminué de la quantité vendue."
                 : 'Choisis une bande pour déduire automatiquement son effectif — sinon la vente reste indépendante du Poulailler.'}
@@ -485,7 +485,7 @@ function VenteFormModal({
                 </option>
               ))}
             </select>
-            <p className="mt-1.5 text-[11px] text-ink-700/50">
+            <p className="mt-1.5 text-2xs text-ink-700/50">
               {lotBetailSelectionne
                 ? "L'effectif de ce lot sera automatiquement diminué de la quantité vendue."
                 : 'Choisis un lot pour déduire automatiquement son effectif — sinon la vente reste indépendante du Bétail.'}
@@ -568,7 +568,7 @@ function VenteFormModal({
               onChange={(e) => setMontantPayeSaisi(e.target.value)}
             />
             {montantTotal > 0 && (
-              <p className="mt-1.5 text-[11px] text-ink-700/50">
+              <p className="mt-1.5 text-2xs text-ink-700/50">
                 {Number(montantPayeSaisi) >= montantTotal && montantPayeSaisi
                   ? 'Ce montant couvre le total — la vente sera enregistrée comme "Payé".'
                   : `Reste à payer : ${(Math.max(0, montantTotal - (Number(montantPayeSaisi) || 0)) ?? 0).toLocaleString('fr-FR')} FCFA`}
@@ -633,7 +633,7 @@ function PaiementModal({
         <div className="space-y-1.5 rounded-lg bg-ink-900/[0.03] px-3.5 py-3 text-xs text-ink-700">
           <div className="flex justify-between"><span>Montant total</span><span className="font-medium text-ink-900">{(vente.montantTotal ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
           <div className="flex justify-between"><span>Déjà versé</span><span className="font-medium text-ink-900">{(vente.montantPaye ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
-          <div className="flex justify-between border-t border-ink-900/10 pt-1.5"><span className="font-medium text-clay-600">Reste à payer</span><span className="font-semibold text-clay-600">{(resteActuel ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
+          <div className="flex justify-between border-t border-ink-900/12 pt-1.5"><span className="font-medium text-clay-600">Reste à payer</span><span className="font-semibold text-clay-600">{(resteActuel ?? 0).toLocaleString('fr-FR')} FCFA</span></div>
         </div>
         <FormField label="Montant reçu maintenant (FCFA)">
           <input
