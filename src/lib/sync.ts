@@ -1,6 +1,8 @@
 import { db } from './db'
 import { apiConfig } from '@/config/api'
 import { apiRequest, ApiError, ApiOfflineError } from './api'
+import { ROLE_MODULE_ACCESS, MODULE_PAR_TABLE, estRoleConnu } from '@/config/roles'
+import type { Role } from '@/types'
 
 /**
  * Synchronisation UniVol : client de bureau (Dexie) <-> votre backend Fastify.
@@ -92,6 +94,62 @@ export interface Conflit {
   cause: string
   /** Champ en conflit, quand il est identifiable. */
   champ?: 'reference' | 'nom'
+}
+
+// ---------------------------------------------------------------------
+// Périmètre du rôle connecté
+//
+// Le serveur accorde les permissions PAR MODULE ET PAR RÔLE : un technicien
+// n'a aucun droit sur `clients`, `ventes`, `achats` ou `depenses`. Envoyer
+// ces tables quand même produisait un 403 à chaque cycle, et le poste
+// accumulait des erreurs sans fin.
+//
+// La synchronisation ne touche donc que ce que le rôle a le droit de faire.
+// ROLE_MODULE_ACCESS (partagé avec l'interface) fait autorité : ce que
+// l'utilisateur voit dans son menu est exactement ce qui se synchronise.
+// ---------------------------------------------------------------------
+
+/** Rôle de l'utilisateur connecté, lu depuis la session. */
+function roleCourant(): Role | null {
+  try {
+    const brut = sessionStorage.getItem('univol_user')
+    if (!brut) return null
+
+    const utilisateur = JSON.parse(brut) as { role?: unknown }
+
+    return estRoleConnu(utilisateur?.role) ? utilisateur.role : null
+  } catch {
+    return null
+  }
+}
+
+/** Le rôle peut-il LIRE ce module côté serveur ? */
+function peutLire(role: Role, table: string): boolean {
+  const module = MODULE_PAR_TABLE[table]
+  if (!module) return false
+
+  return ROLE_MODULE_ACCESS[role].includes(module)
+}
+
+/**
+ * Le rôle peut-il ÉCRIRE dans ce module ?
+ *
+ * Le journal d'activité fait exception : l'application y consigne les
+ * actions de TOUS les utilisateurs, quel que soit leur rôle, et le serveur
+ * accepte la création pour tout le monde. Sa lecture, elle, reste réservée
+ * à l'administrateur — ce que `peutLire` traduit correctement.
+ */
+function peutEcrire(role: Role, table: string): boolean {
+  if (table === 'journal') return true
+
+  return peutLire(role, table)
+}
+
+/** Tables volontairement écartées pour ce rôle (informatif, pour la console). */
+function tablesEcartees(role: Role | null): string[] {
+  if (!role) return Object.keys(MODULE_PAR_TABLE)
+
+  return Object.keys(MODULE_PAR_TABLE).filter((table) => !peutEcrire(role, table))
 }
 
 interface Ressource {
@@ -328,10 +386,14 @@ function memoriserServeur(): void {
  * modification de la donnée, seulement un changement d'état de
  * synchronisation.
  */
-async function preparerPremierContact(): Promise<number> {
+async function preparerPremierContact(role: Role | null): Promise<number> {
   let marques = 0
 
   for (const table of db.tables) {
+    // Inutile de marquer des tables que ce rôle n'a pas le droit d'envoyer :
+    // le serveur les refuserait, et elles resteraient « en attente » à vie.
+    if (!role || !peutEcrire(role, table.name)) continue
+
     let lignes: Record<string, unknown>[]
 
     try {
@@ -727,18 +789,31 @@ export async function synchronize(options: { toutEnvoyer?: boolean } = {}): Prom
     await cycleEnCours.catch(() => undefined)
   }
 
+  // Périmètre du rôle connecté : le serveur accorde les permissions par
+  // module et par rôle, la synchronisation ne doit donc toucher que ce qui
+  // est autorisé.
+  const role = roleCourant()
+  const ecartees = tablesEcartees(role)
+
+  if (ecartees.length > 0) {
+    console.info(
+      `Rôle ${role ?? 'inconnu'} : ${ecartees.length} table(s) hors périmètre, ` +
+        `non synchronisée(s) — ${ecartees.join(', ')}`,
+    )
+  }
+
   // Premier contact avec ce serveur : tout le contenu local doit monter, et
   // aucune suppression ne doit être déduite de la comparaison avec le serveur.
   const premierContact = !serveurDejaConnu()
   if (premierContact) {
-    const marques = await preparerPremierContact()
+    const marques = await preparerPremierContact(role)
     console.info(
       `Premier contact avec ${apiConfig.baseUrl} : ${marques} enregistrement(s) ` +
         'local(aux) marqués pour envoi.',
     )
   }
 
-  const cycle = executerCycle(options.toutEnvoyer === true, premierContact).finally(() => {
+  const cycle = executerCycle(options.toutEnvoyer === true, premierContact, role).finally(() => {
     cycleEnCours = null
   })
 
@@ -748,7 +823,11 @@ export async function synchronize(options: { toutEnvoyer?: boolean } = {}): Prom
 }
 
 /** Corps d'un cycle, sans la gestion de concurrence. */
-async function executerCycle(toutEnvoyer: boolean, premierContact: boolean): Promise<SyncResult> {
+async function executerCycle(
+  toutEnvoyer: boolean,
+  premierContact: boolean,
+  role: Role | null,
+): Promise<SyncResult> {
   const resultat: SyncResult = { success: true, uploaded: 0, downloaded: 0, errors: [] }
 
   try {
@@ -776,6 +855,10 @@ async function executerCycle(toutEnvoyer: boolean, premierContact: boolean): Pro
       const ressource = RESSOURCES[nomTable]
       if (!ressource) continue
 
+      // Hors périmètre du rôle : le serveur répondrait 403. On n'essaie
+      // même pas, plutôt que d'accumuler des erreurs à chaque cycle.
+      if (!role || !peutEcrire(role, nomTable)) continue
+
       try {
         await pousserTable(nomTable, ressource, resultat, toutEnvoyer)
       } catch (erreur) {
@@ -786,8 +869,10 @@ async function executerCycle(toutEnvoyer: boolean, premierContact: boolean): Pro
       }
     }
 
-    // 2. Récupération
+    // 2. Récupération — uniquement les modules que ce rôle peut consulter.
     for (const [nomTable, ressource] of Object.entries(RESSOURCES)) {
+      if (!role || !peutLire(role, nomTable)) continue
+
       try {
         await tirerTable(nomTable, ressource, resultat, premierContact)
       } catch (erreur) {

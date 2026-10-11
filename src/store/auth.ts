@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { AppUser, Role } from '@/types'
 import { startAutoSync, stopAutoSync } from '@/lib/sync'
 import { api, ApiAuthError, ApiOfflineError, hasToken, setToken } from '@/lib/api'
+import { estRoleConnu as estRoleConnue } from '@/config/roles'
 
 // ---------------------------------------------------------------------
 // REPLI HORS LIGNE — À NE PAS CONFONDRE AVEC L'AUTHENTIFICATION.
@@ -61,14 +62,8 @@ const UTILISATEURS: Record<Role, AppUser> = {
   },
 }
 
-function estRoleConnue(valeur: unknown): valeur is Role {
-  return (
-    valeur === 'admin' ||
-    valeur === 'commercial' ||
-    valeur === 'technique' ||
-    valeur === 'observateur'
-  )
-}
+// `estRoleConnue` est partagé avec la couche de synchronisation, qui en a
+// besoin pour lire le rôle depuis la session.
 
 /** Cherche un rôle correspondant au code, dans la table de repli locale. */
 function roleDepuisCodeLocal(code: string): Role | null {
@@ -204,16 +199,10 @@ export const useAuth = create<AuthState>((set) => ({
   },
 }))
 
-export const ROLE_LABELS: Record<Role, string> = {
-  admin: 'Administrateur',
-  commercial: 'Gestionnaire Commercial',
-  technique: 'Gestionnaire Technique',
-  observateur: 'Observateur',
-}
-
-export const ROLE_MODULE_ACCESS: Record<Role, string[]> = {
-  admin: ['dashboard', 'couvoir', 'poulailler', 'betail', 'achats', 'depenses', 'ventes', 'stocks', 'clients', 'fournisseurs', 'rapports', 'journal'],
-  commercial: ['dashboard', 'achats', 'depenses', 'ventes', 'stocks', 'clients', 'fournisseurs'],
-  technique: ['dashboard', 'couvoir', 'poulailler', 'betail', 'stocks'],
-  observateur: ['dashboard', 'rapports'],
-}
+// Le modèle de rôles vit désormais dans src/config/roles.ts : il est partagé
+// avec la couche de synchronisation, qui doit filtrer les tables selon le
+// rôle connecté (sans quoi un technicien tente de synchroniser des modules
+// auxquels il n'a pas accès, et le serveur répond 403).
+//
+// Réexporté ici pour ne pas casser les imports existants des pages.
+export { ROLE_LABELS, ROLE_MODULE_ACCESS } from '@/config/roles'
