@@ -181,8 +181,10 @@ const RESSOURCES: Record<string, Ressource> = {
       'poussinsEclos', 'oeufsInfeconds', 'mortaliteEmbryonnaire', 'dateEclosionReelle',
       'notes', 'creePar', 'creeLe', 'modifieLe',
     ],
+    // Incrémental depuis le correctif 0.1.18 : les suppressions de lots
+    // arrivent sous forme de pierres tombales, même si la liste active est vide.
     pousser: true,
-    incremental: false,
+    incremental: true,
   },
   journal: {
     chemin: '/api/journal',
