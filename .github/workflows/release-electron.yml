@@ -64,7 +64,7 @@ jobs:
           # n'enverrait rien au serveur.
           # Le secret de dépôt est prioritaire ; à défaut, l'adresse par
           # défaut du serveur est utilisée (ce n'est pas une valeur secrète).
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://13.140.187.105' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://univol-api-firestore.vercel.app' }}
           VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
           VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
           VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
@@ -108,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Voir le commentaire du job Windows : sans cette variable,
           # l'application macOS installée serait aussi en mode hors ligne.
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://13.140.187.105' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://univol-api-firestore.vercel.app' }}
           VITE_PIN_ADMIN: ${{ secrets.VITE_PIN_ADMIN }}
           VITE_PIN_COMMERCIAL: ${{ secrets.VITE_PIN_COMMERCIAL }}
           VITE_PIN_TECHNIQUE: ${{ secrets.VITE_PIN_TECHNIQUE }}
