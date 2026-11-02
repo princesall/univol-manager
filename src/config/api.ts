@@ -18,7 +18,7 @@
 //
 // L'ADRESSE N'EST PAS UN SECRET : elle apparaît de toute façon dans le
 // trafic réseau de l'application.
-const ADRESSE_PAR_DEFAUT = 'https://13.140.187.105'
+const ADRESSE_PAR_DEFAUT = 'https://univol-api-firestore.vercel.app'
 
 function normaliser(url: string): string {
   const propre = url.trim().replace(/\/+$/, '')
