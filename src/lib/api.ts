@@ -1,4 +1,5 @@
 import { apiConfig, checkApiConfig } from '@/config/api'
+import { getDeviceId, ORGANISATION_ID } from '@/lib/licence'
 
 /**
  * Client HTTP du backend UniVol (Fastify + JWT).
@@ -147,7 +148,19 @@ export const api = {
 
   /** POST /api/auth/login — renvoie le rôle et le jeton JWT. */
   login: (pin: string) =>
-    request<{ role: string; token: string }>('/api/auth/login', send('POST', { pin })),
+    request<{ role: string; token: string }>(
+      '/api/auth/login',
+      send('POST', {
+        pin,
+        organisation_id: ORGANISATION_ID,
+        device_id: getDeviceId(),
+        poste_nom: `${navigator.platform || 'Poste'} · UniVol ${
+          typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
+        }`,
+        version:
+          typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0',
+      }),
+    ),
 
   clients: resource('/api/clients'),
   fournisseurs: resource('/api/fournisseurs'),
